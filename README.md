@@ -1,6 +1,6 @@
 # lustre_helpers
 
-### Collection of scripts to quickly spin up a lustre clusters using qemu or aws
+### Collection of scripts to quickly spin up a lustre clusters using qemu or cloud
 
 You need to create a bridge on the host server
 

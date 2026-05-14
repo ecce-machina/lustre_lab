@@ -1,0 +1,17 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+terraform.tfplan
+
+# macOS
+.DS_Store
+
+# SSH / keys
+*.pem
+id_rsa*
+*.pub
+
+# Logs
+*.log

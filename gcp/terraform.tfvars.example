@@ -1,0 +1,5 @@
+project_id = "your-gcp-project"
+region     = "your-region"
+zone       = "your-zone"
+
+repo_url = "https://github.com/d00bay/lustre-helpers.git"

@@ -11,7 +11,7 @@ resource "google_compute_instance" "image_builder" {
 
   boot_disk {
     initialize_params {
-      image = "projects/rocky-linux-cloud/global/images/family/rocky-linux-9-optimized-gcp"
+      image = "projects/rocky-linux-cloud/global/images/family/rocky-linux-9"
       size  = var.boot_disk_size_gb
       type  = "pd-balanced"
     }
@@ -27,24 +27,41 @@ resource "google_compute_instance" "image_builder" {
     #!/bin/bash
     set -euxo pipefail
 
+    LOG=/var/log/lustre-image-build.log
+    exec > >(tee -a "$LOG") 2>&1
+
     dnf -y install git
 
-    rm -rf /opt/lustre-helpers
-    git clone ${var.repo_url} /opt/lustre-helpers
+    if [[ ! -d /opt/lustre-helpers ]]; then
+      git clone ${var.repo_url} /opt/lustre-helpers
+    fi
 
     cd /opt/lustre-helpers
 
-    bash install_pkgs.sh
-    bash build_lustre.sh
+    if [[ ! -f /opt/lustre-helpers/.packages_done ]]; then
+      echo "=== PHASE 1: installing packages ==="
+      bash install_pkgs.sh
+      touch /opt/lustre-helpers/.packages_done
+      echo "=== PHASE 1 complete; rebooting ==="
+      reboot
+      exit 0
+    fi
 
-    depmod -a
+    if [[ ! -f /opt/lustre-helpers/.build_done ]]; then
+      echo "=== PHASE 2: building Lustre ==="
+      bash build_lustre.sh --method rpm
+      depmod -a || true
 
-    modprobe lnet || true
-    modprobe lustre || true
+      echo "=== Built modules found ==="
+      find /lib/modules/$(uname -r) \
+        \( -name 'lustre.ko*' -o -name 'lnet.ko*' -o -name 'ldiskfs.ko*' \) \
+        -print || true
 
+      touch /opt/lustre-helpers/.build_done
+    fi
+
+    echo "=== IMAGE_BUILD_DONE ==="
     touch /opt/lustre-helpers/IMAGE_BUILD_DONE
-
-    shutdown -h now
   EOF
 
   allow_stopping_for_update = true

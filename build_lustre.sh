@@ -72,15 +72,13 @@ install_from_rpms() {
 
 post_install() {
   depmod -a
-  modprobe -D lustre
-  modprobe ldiskfs
   echo "Installed Lustre RPMs:"
   rpm -qa | grep -i lustre | sort
 
-  echo "Checking module visibility:"
-  modprobe -D lustre || true
-  modprobe -D ldiskfs || true
-  modprobe -D osd-ldiskfs || true
+  echo "Module files present:"
+  find /lib/modules \
+    \( -name 'lustre.ko*' -o -name 'lnet.ko*' -o -name 'ldiskfs.ko*' -o -name 'osd_ldiskfs.ko*' \) \
+    -print || true
 }
 
 case "$METHOD" in

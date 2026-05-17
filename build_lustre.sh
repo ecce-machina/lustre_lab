@@ -68,7 +68,6 @@ install_from_rpms() {
   ./lustre-2.17.0-1.el9.x86_64.rpm \
   ./lustre-osd-ldiskfs-mount-2.17.0-1.el9.x86_64.rpm \
   ./lustre-iokit-2.17.0-1.el9.x86_64.rpm \
-  ./lustre-tests-2.17.0-1.el9.x86_64.rpm
 }
 
 post_install() {

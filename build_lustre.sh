@@ -15,18 +15,7 @@ done
 echo "Downloading and installing e2fsprogs with whamcloud patch"
 
 wget -r -np -nd -A "*.rpm" https://downloads.whamcloud.com/public/e2fsprogs/latest/el9/RPMS/x86_64/
-sudo dnf -y install \
-  ./kernel-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
-  ./kernel-core-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
-  ./kernel-modules-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
-  ./kernel-modules-core-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
-  ./kernel-modules-extra-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
-  ./kmod-lustre-2.17.0-1.el9.x86_64.rpm \
-  ./kmod-lustre-osd-ldiskfs-2.17.0-1.el9.x86_64.rpm \
-  ./lustre-2.17.0-1.el9.x86_64.rpm \
-  ./lustre-osd-ldiskfs-mount-2.17.0-1.el9.x86_64.rpm \
-  ./lustre-iokit-2.17.0-1.el9.x86_64.rpm \
-  ./lustre-tests-2.17.0-1.el9.x86_64.rpm
+sudo dnf -y install *.rpm
 
 install_from_source() {
     echo "Installing kernel sources"
@@ -68,7 +57,18 @@ install_from_rpms() {
   wget -r -np -nd -A "*.rpm" \
     https://downloads.whamcloud.com/public/lustre/lustre-2.17.0/el9.7/server/RPMS/x86_64/
 
-  dnf -y install ./*.rpm
+  sudo dnf -y install \
+  ./kernel-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
+  ./kernel-core-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
+  ./kernel-modules-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
+  ./kernel-modules-core-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
+  ./kernel-modules-extra-5.14.0-611.13.1_lustre.el9.x86_64.rpm \
+  ./kmod-lustre-2.17.0-1.el9.x86_64.rpm \
+  ./kmod-lustre-osd-ldiskfs-2.17.0-1.el9.x86_64.rpm \
+  ./lustre-2.17.0-1.el9.x86_64.rpm \
+  ./lustre-osd-ldiskfs-mount-2.17.0-1.el9.x86_64.rpm \
+  ./lustre-iokit-2.17.0-1.el9.x86_64.rpm \
+  ./lustre-tests-2.17.0-1.el9.x86_64.rpm
 }
 
 post_install() {

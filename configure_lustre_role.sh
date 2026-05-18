@@ -67,9 +67,14 @@ case "$ROLE" in
       fi
 
       mkdir -p "/mnt/ost${index}"
-      if ! mountpoint -q "/mnt/ost${index}"; then
-          mount -t lustre "$dev" "/mnt/ost${index}"
-      fi
+      for attempt in {1..12}; do
+          if ! mountpoint -q "/mnt/ost${index}"; then
+              mount -t lustre "$dev" "/mnt/ost${index}"
+              break
+          fi
+          echo "OST${index} mount failed, retrying in 10s..."
+          sleep 10
+     done
       i=$((i + 1))
     done
     ;;

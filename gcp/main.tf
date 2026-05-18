@@ -48,20 +48,58 @@ resource "google_compute_instance" "image_builder" {
     fi
 
     if [[ ! -f /opt/lustre-helpers/.build_done ]]; then
-      echo "=== PHASE 2: building Lustre ==="
+      echo "=== PHASE 2: installing Lustre RPMs ==="
       bash build_lustre.sh --method rpm
-      depmod -a || true
 
-      echo "=== Built modules found ==="
-      find /lib/modules/$(uname -r) \
-        \( -name 'lustre.ko*' -o -name 'lnet.ko*' -o -name 'ldiskfs.ko*' \) \
-        -print || true
+      LUSTRE_KERNEL="$(rpm -qa --qf '%%{NAME} %%{VERSION}-%%{RELEASE}.%%{ARCH}\n' \
+          | awk '$1 == "kernel" && $2 ~ /_lustre/ {print $2}' \
+          | sort -V \
+          | tail -1)"
+
+      if [[ -z "$LUSTRE_KERNEL" ]]; then
+          echo "ERROR: could not find installed Lustre kernel"
+          rpm -qa | grep '^kernel' | sort
+          exit 1
+      fi
+      
+      echo "=== Setting default kernel to $LUSTRE_KERNEL ==="
+      grubby --set-default "/boot/vmlinuz-$LUSTRE_KERNEL"
 
       touch /opt/lustre-helpers/.build_done
+
+      echo "=== PHASE 2 complete; rebooting into Lustre kernel ==="
+      reboot
+      exit 0
     fi
 
-    echo "=== IMAGE_BUILD_DONE ==="
-    touch /opt/lustre-helpers/IMAGE_BUILD_DONE
+    if [[ ! -f /opt/lustre-helpers/.modules_verified ]]; then
+      echo "=== PHASE 3: verifying Lustre modules ==="
+
+      LUSTRE_KERNEL="$(cat /opt/lustre-helpers/.lustre_kernel)"
+
+      echo "Expected Lustre kernel: $LUSTRE_KERNEL"
+      echo "Running kernel: $(uname -r)"
+
+      [[ "$(uname -r)" == "$LUSTRE_KERNEL" ]]
+
+      depmod -a
+
+      modprobe lustre
+      modprobe ldiskfs
+      modprobe osd_ldiskfs
+
+      find /lib/modules/$(uname -r) \
+          \( -name 'lustre.ko*' -o -name 'lnet.ko*' -o -name 'ldiskfs.ko*' -o -name 'osd_ldiskfs.ko*' \) \
+          -print
+
+      lsmod | grep -E 'lustre|lnet|ldiskfs|osd'
+
+      touch /opt/lustre-helpers/.modules_verified
+   fi
+
+        echo "=== IMAGE_BUILD_DONE ==="
+        touch /opt/lustre-helpers/IMAGE_BUILD_DONE
+        shutdown -h now
   EOF
 
   allow_stopping_for_update = true

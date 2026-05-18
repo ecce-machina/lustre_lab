@@ -53,17 +53,23 @@ case "$ROLE" in
       index=$((INDEX_BASE + i))
 
       if [[ "$FORMAT" == "true" ]]; then
-        mkfs.lustre \
-          --fsname="$FSNAME" \
-          --ost \
-          --mgsnode="$MGS_NID" \
-          --index="$index" \
-          "$dev"
+          if  mkfs.lustre \
+              --fsname="$FSNAME" \
+              --ost \
+              --mgsnode="$MGS_NID" \
+              --index="$index" \
+              "$dev"; then
+            echo "Formatted OST index $index on $dev"
+          else
+            echo "mkfs.lustre failed or device already formatted; checking existing Lustre label"
+            tunefs.lustre --dryrun "$dev"
+          fi
       fi
 
       mkdir -p "/mnt/ost${index}"
-      mount -t lustre "$dev" "/mnt/ost${index}"
-
+      if ! mountpoint -q "/mnt/ost${index}"; then
+          mount -t lustre "$dev" "/mnt/ost${index}"
+      fi
       i=$((i + 1))
     done
     ;;

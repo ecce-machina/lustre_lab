@@ -21,3 +21,19 @@ variable "machine_type" {
 variable "boot_disk_size_gb" {
   default = 80
 }
+
+variable "fsname" {
+  default = "lustrefs"
+}
+
+variable "cluster_subnet_cidr" {
+  default = "10.10.0.0/24"
+}
+
+variable "mdt_disk_size_gb" {
+  default = 80
+}
+
+variable "ost_disk_size_gb" {
+  default = 100
+}

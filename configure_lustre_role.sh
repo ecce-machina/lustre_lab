@@ -68,10 +68,15 @@ case "$ROLE" in
 
       mkdir -p "/mnt/ost${index}"
       for attempt in {1..12}; do
-          if ! mountpoint -q "/mnt/ost${index}"; then
-              mount -t lustre "$dev" "/mnt/ost${index}"
+          if  mountpoint -q "/mnt/ost${index}"; then
               break
           fi
+
+          if mount -t lustre "$dev" "/mnt/ost${index}"; then
+              echo "Mounted OST${index} on $dev"
+              break
+          fi
+          
           echo "OST${index} mount failed, retrying in 10s..."
           sleep 10
      done

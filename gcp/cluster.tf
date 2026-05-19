@@ -159,7 +159,9 @@ resource "google_compute_instance" "oss" {
 }
 
 resource "google_compute_instance" "client" {
-  name         = "lustre-client1"
+  count        = var.client_count
+
+  name         = "lustre-client${count.index + 1}"
   machine_type = var.machine_type
   zone         = var.zone
 
@@ -173,7 +175,7 @@ resource "google_compute_instance" "client" {
 
   network_interface {
     subnetwork = google_compute_subnetwork.lustre.id
-    network_ip = "10.10.0.30"
+    network_ip = "10.10.0.${30 + count.index}"
     access_config {}
   }
 

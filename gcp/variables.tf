@@ -37,3 +37,9 @@ variable "mdt_disk_size_gb" {
 variable "ost_disk_size_gb" {
   default = 100
 }
+
+variable "oss_count" {
+  type    = number
+  default = 1
+}
+

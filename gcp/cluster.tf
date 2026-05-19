@@ -44,11 +44,12 @@ resource "google_compute_disk" "mdt0" {
   size = var.mdt_disk_size_gb
 }
 
-resource "google_compute_disk" "ost0" {
-  name = "lustre-ost0"
-  type = "pd-balanced"
-  zone = var.zone
-  size = var.ost_disk_size_gb
+resource "google_compute_disk" "ost" {
+  count = var.oss_count
+  name  = "lustre-ost${count.index}"
+  type  = "pd-balanced"
+  zone  = var.zone
+  size  = var.ost_disk_size_gb
 }
 
 resource "google_compute_instance" "mds" {
@@ -102,7 +103,8 @@ resource "google_compute_instance" "mds" {
 }
 
 resource "google_compute_instance" "oss" {
-  name         = "lustre-oss1"
+  count        = var.oss_count
+  name         = "lustre-oss${count.index + 1}"
   machine_type = var.machine_type
   zone         = var.zone
 
@@ -115,13 +117,13 @@ resource "google_compute_instance" "oss" {
   }
 
   attached_disk {
-    source      = google_compute_disk.ost0.id
-    device_name = "ost0"
+    source      = google_compute_disk.ost[count.index].id
+    device_name = "ost${count.index}"
   }
 
   network_interface {
     subnetwork = google_compute_subnetwork.lustre.id
-    network_ip = "10.10.0.20"
+    network_ip = "10.10.0.${20 + count.index}"
     access_config {}
   }
 
@@ -145,8 +147,8 @@ resource "google_compute_instance" "oss" {
       --role oss \
       --fsname ${var.fsname} \
       --mgs-nid 10.10.0.10@tcp \
-      --ost-dev /dev/disk/by-id/google-ost0 \
-      --index-base 0 \
+      --ost-dev /dev/disk/by-id/google-ost${count.index} \
+      --index-base ${count.index} \
       --format true
   EOF
 

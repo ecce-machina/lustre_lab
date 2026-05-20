@@ -205,7 +205,7 @@ resource "google_compute_instance" "client" {
     bash configure_slurm_client.sh \
       --role ${count.index == 0 ? "controller" : "worker"} \
       --node-name lustre-client${count.index + 1} \
-      --controller-host lustre-client1
+      --controller-host lustre-client1 \
       --munge-key '${random_password.munge_key.result}'
 
   EOF

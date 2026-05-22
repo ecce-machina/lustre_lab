@@ -40,10 +40,10 @@ variable "ost_disk_size_gb" {
 
 variable "oss_count" {
   type    = number
-  default = 2
+  default = 4
 }
 
 variable "client_count" {
   type    = number
-  default = 2
+  default = 4
 }

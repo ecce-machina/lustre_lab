@@ -1,0 +1,17 @@
+[mds]
+${mds_name} ansible_host=${mds_ip}
+
+[oss]
+%{ for i, name in oss_names ~}
+${name} ansible_host=${oss_ips[i]}
+%{ endfor ~}
+
+[client]
+%{ for i, name in client_names ~}
+${name} ansible_host=${client_ips[i]}
+%{ endfor ~}
+
+[lab:children]
+mds
+oss
+client

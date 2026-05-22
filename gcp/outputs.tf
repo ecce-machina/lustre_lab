@@ -42,5 +42,8 @@ output "ansible_inventory" {
         oss_ips     = google_compute_instance.oss[*].network_interface[0].network_ip
         client_names = google_compute_instance.client[*].name
         client_ips   = google_compute_instance.client[*].network_interface[0].network_ip
+        zone        = var.zone
+        project_id  = var.project_id
+        ansible_user = var.ansible_user
     })
 }

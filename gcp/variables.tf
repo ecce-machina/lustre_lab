@@ -47,3 +47,9 @@ variable "client_count" {
   type    = number
   default = 4
 }
+
+variable "ansible_user" {
+  type = string
+  description = "SSH username for Ansible"
+}
+

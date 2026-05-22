@@ -1,14 +1,17 @@
+[all:vars]
+ansible_user=${ansible_user}
+
 [mds]
-${mds_name} ansible_host=${mds_ip}
+${mds_name}.${zone}.${project_id}
 
 [oss]
-%{ for i, name in oss_names ~}
-${name} ansible_host=${oss_ips[i]}
+%{ for name in oss_names ~}
+${name}.${zone}.${project_id}
 %{ endfor ~}
 
 [client]
-%{ for i, name in client_names ~}
-${name} ansible_host=${client_ips[i]}
+%{ for name in client_names ~}
+${name}.${zone}.${project_id}
 %{ endfor ~}
 
 [lab:children]

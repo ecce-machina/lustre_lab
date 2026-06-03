@@ -54,7 +54,7 @@ SelectType=select/cons_tres
 SelectTypeParameters=CR_Core
 
 NodeName=${CLIENT_RANGE} CPUs=${CPUS_PER_CLIENT} State=UNKNOWN
-PartitionName=debug Nodes=lustre-client[1-2] Default=YES MaxTime=INFINITE State=UP
+PartitionName=debug Nodes=${CLIENT_RANGE} Default=YES MaxTime=INFINITE State=UP
 EOF
 
 mkdir -p /var/spool/slurmd /var/spool/slurmctld

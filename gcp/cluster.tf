@@ -207,7 +207,7 @@ resource "google_compute_instance" "client" {
       --node-name lustre-client${count.index + 1} \
       --controller-host lustre-client1 \
       --client-range "lustre-client[1-${var.client_count}]" \
-      --cpus-per-client 4 \
+      --cpu-per-client 4 \
       --munge-key '${random_password.munge_key.result}'
 
   EOF

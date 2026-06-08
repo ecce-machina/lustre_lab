@@ -24,6 +24,44 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+## sets up observability
+
+install_node_exporter() {
+  NODE_EXPORTER_VERSION="1.8.2"
+
+  if systemctl is-active --quiet node_exporter; then
+    echo "node_exporter already running"
+    return 0
+  fi
+
+  useradd --no-create-home --shell /sbin/nologin node_exporter || true
+
+  cd /tmp
+  curl -LO "https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz"
+  tar xzf "node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz"
+
+  install -m 0755 "node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter" /usr/local/bin/node_exporter
+
+  cat >/etc/systemd/system/node_exporter.service <<EOF
+[Unit]
+Description=Prometheus Node Exporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter --web.listen-address=0.0.0.0:9100
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  systemctl daemon-reload
+  systemctl enable --now node_exporter
+}
+
 modprobe lnet
 modprobe lustre
 
@@ -42,6 +80,7 @@ case "$ROLE" in
 
     mkdir -p /mnt/mdt0
     mount -t lustre "$MDT_DEV" /mnt/mdt0
+	install_node_exporter
     ;;
 
   oss)
@@ -82,6 +121,7 @@ case "$ROLE" in
      done
       i=$((i + 1))
     done
+	install_node_exporter	
     ;;
 
   client)
@@ -89,6 +129,7 @@ case "$ROLE" in
 
     mkdir -p "$MOUNTPOINT"
     mount -t lustre "${MGS_NID}:/${FSNAME}" "$MOUNTPOINT"
+	install_node_exporter
     ;;
 
   *)

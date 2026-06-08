@@ -2,4 +2,4 @@ project_id = "your-gcp-project"
 region     = "your-region"
 zone       = "your-zone"
 
-repo_url = "https://github.com/d00bay/lustre_helpers.git"
+repo_url = "https://github.com/ecce-machina/lustre_helpers.git"

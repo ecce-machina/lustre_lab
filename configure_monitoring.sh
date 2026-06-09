@@ -5,9 +5,30 @@ set -euxo pipefail
 exec > >(tee -a /var/log/configure_monitoring.log)
 exec 2>&1
 
-MDS_IP="${mds_ip}"
-OSS_IPS="${oss_ips}"
-CLIENT_IPS="${client_ips}"
+MDS_IP=""
+OSS_IPS=""
+CLIENT_IPS=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --mds-ip)
+      MDS_IP="$2"
+      shift 2
+      ;;
+    --oss-ips)
+      OSS_IPS="$2"
+      shift 2
+      ;;
+    --client-ips)
+      CLIENT_IPS="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      exit 1
+      ;;
+  esac
+done
 
 PROM_VERSION="2.53.0"
 

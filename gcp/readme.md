@@ -6,7 +6,6 @@ Then, we need to build the lustre image so it can be used for the client/MDS/OSS
 
 ```
 cd lustre_helpers/gcp
-terraform destroy
 terraform apply -target=google_compute_instance.image_builder
 ```
 

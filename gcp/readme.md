@@ -12,7 +12,7 @@ terraform apply -target=google_compute_instance.image_builder
 Check the progress:
 
 ```
-cloud compute ssh lustre-image-builder \
+gcloud compute ssh lustre-image-builder \
   --zone <your zone> \
   --command='sudo tail -f /var/log/lustre-image-build.log'
 ```

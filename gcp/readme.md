@@ -13,7 +13,7 @@ Check the progress:
 
 ```
 cloud compute ssh lustre-image-builder \
-  --zone <the zone you're working on> \
+  --zone <your zone> \
   --command='sudo tail -f /var/log/lustre-image-build.log'
 ```
 

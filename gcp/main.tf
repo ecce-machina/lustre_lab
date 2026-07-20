@@ -110,5 +110,6 @@ resource "google_compute_image" "lustre_image" {
   family      = var.image_family
   source_disk = google_compute_instance.image_builder.boot_disk[0].source
 
-  depends_on = [google_compute_instance.image_builder]
+  depends_on   = [google_compute_instance.image_builder]
 }
+

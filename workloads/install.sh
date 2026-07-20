@@ -2,14 +2,25 @@
 set -euo pipefail
 
 SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-INSTALL_ROOT=/opt/lustre-lab/workloads
+INSTALL_DIR=/opt/lustre-workloads
 
-install -d -m 0755 "$INSTALL_ROOT/scripts"
-install -m 0755 "$SOURCE_DIR/lustre-workload" /usr/local/bin/lustre-workload
-install -m 0755 "$SOURCE_DIR/workload.sbatch" "$INSTALL_ROOT/workload.sbatch"
+install -d -m 0755 "$INSTALL_DIR"
+install -d -m 0755 "$INSTALL_DIR/scripts"
 
-for script in "$SOURCE_DIR"/scripts/*.sh; do
-    install -m 0755 "$script" "$INSTALL_ROOT/scripts/$(basename "$script")"
-done
+install -m 0755 \
+    "$SOURCE_DIR/lustre-workload.sh" \
+    "$INSTALL_DIR/lustre-workload.sh"
+
+install -m 0644 \
+    "$SOURCE_DIR/workload.sbatch" \
+    "$INSTALL_DIR/workload.sbatch"
+
+install -m 0755 \
+    "$SOURCE_DIR"/scripts/*.sh \
+    "$INSTALL_DIR/scripts/"
+
+ln -sfn \
+    "$INSTALL_DIR/lustre-workload.sh" \
+    /usr/local/bin/lustre-workload.sh
 
 echo "Installed Lustre workloads on $(hostname -s)"

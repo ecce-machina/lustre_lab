@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKLOAD_ROOT=${WORKLOAD_ROOT:-/opt/lustre-lab/workloads}
+WORKLOAD_ROOT=${WORKLOAD_ROOT:-/opt/lustre-workloads}
 JOB_FILE="$WORKLOAD_ROOT/workload.sbatch"
 PARTITION=${SLURM_PARTITION:-debug}
 

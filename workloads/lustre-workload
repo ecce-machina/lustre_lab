@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+WORKLOAD_ROOT=${WORKLOAD_ROOT:-/opt/lustre-lab/workloads}
+JOB_FILE="$WORKLOAD_ROOT/workload.sbatch"
+PARTITION=${SLURM_PARTITION:-debug}
+
+usage() {
+    cat <<'EOF'
+Usage:
+  lustre-workload list
+  lustre-workload run WORKLOAD [options]
+  lustre-workload status
+  lustre-workload cancel JOB_ID
+
+Workloads:
+  prepare-read       Create one read dataset per client
+  read-heavy         Sustained sequential reads on every client
+  write-heavy        Sustained sequential writes on every client
+  metadata-create    Create a metadata dataset on every client
+  lookup-heavy       Repeated stat/lookups against the metadata dataset
+
+Options:
+  --duration SEC     Runtime for timed workloads (default: 300)
+  --size SIZE        Per-client fio file size (default: 8G)
+  --count N          Files per client for metadata-create (default: 50000)
+  --parallel N       Local metadata worker count (default: 16)
+  --nodes N          Number of clients to allocate (default: all)
+  --wait             Wait for the Slurm job to finish
+EOF
+}
+
+all_nodes() {
+    sinfo -h -p "$PARTITION" -o '%D' |
+        awk '{total += $1} END {print total + 0}'
+}
+
+command=${1:-}
+case "$command" in
+    list)
+        printf '%s\n' prepare-read read-heavy write-heavy metadata-create lookup-heavy
+        exit 0
+        ;;
+    status)
+        exec squeue
+        ;;
+    cancel)
+        [[ $# -eq 2 ]] || { usage >&2; exit 2; }
+        exec scancel "$2"
+        ;;
+    run)
+        ;;
+    -h|--help|"")
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown command: $command" >&2
+        usage >&2
+        exit 2
+        ;;
+esac
+
+workload=${2:-}
+shift 2 || true
+
+case "$workload" in
+    prepare-read|read-heavy|write-heavy|metadata-create|lookup-heavy) ;;
+    *)
+        echo "Unknown workload: $workload" >&2
+        usage >&2
+        exit 2
+        ;;
+esac
+
+duration=300
+size=8G
+count=50000
+parallel=16
+nodes=""
+wait_flag=()
+
+while (($#)); do
+    case "$1" in
+        --duration) duration=$2; shift 2 ;;
+        --size) size=$2; shift 2 ;;
+        --count) count=$2; shift 2 ;;
+        --parallel) parallel=$2; shift 2 ;;
+        --nodes) nodes=$2; shift 2 ;;
+        --wait) wait_flag=(--wait); shift ;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 2
+            ;;
+    esac
+done
+
+[[ -x "$WORKLOAD_ROOT/scripts/$workload.sh" ]] || {
+    echo "Missing workload script: $WORKLOAD_ROOT/scripts/$workload.sh" >&2
+    exit 1
+}
+
+if [[ -z "$nodes" ]]; then
+    nodes=$(all_nodes)
+fi
+
+(( nodes > 0 )) || {
+    echo "No Slurm nodes found in partition $PARTITION" >&2
+    exit 1
+}
+
+exec sbatch \
+    "${wait_flag[@]}" \
+    --partition="$PARTITION" \
+    --nodes="$nodes" \
+    --ntasks="$nodes" \
+    --ntasks-per-node=1 \
+    --job-name="lustre-$workload" \
+    --export="ALL,WORKLOAD=$workload,DURATION=$duration,SIZE=$size,COUNT=$count,PARALLEL=$parallel,WORKLOAD_ROOT=$WORKLOAD_ROOT" \
+    "$JOB_FILE"

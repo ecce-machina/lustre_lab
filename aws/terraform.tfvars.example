@@ -1,0 +1,9 @@
+region            = "ca-central-1"
+availability_zone = "ca-central-1a"
+
+repo_url = "https://github.com/ecce-machina/lustre_lab.git"
+
+admin_cidr = "74.59.122.209/32"
+
+oss_count    = 1
+client_count = 1

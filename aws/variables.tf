@@ -54,3 +54,14 @@ variable "admin_cidr" {
   type = string
 }
 
+variable "public_key_path" {
+  description = "Absolute path to the SSH public key used for EC2"
+  type        = string
+}
+
+variable "builder_instance_type" {
+  description = "EC2 instance type used for the Lustre image builder"
+  type        = string
+  default     = "m6i.xlarge"
+}
+

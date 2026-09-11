@@ -144,7 +144,15 @@ build {
 
         test "$(uname -r)" = "$LUSTRE_KERNEL"
 
-        depmod -a
+        depmod -a "$LUSTRE_KERNEL"
+
+        cat >/etc/modules-load.d/lustre.conf <<'EOF'
+        lustre
+        ldiskfs
+        osd_ldiskfs
+        EOF
+        
+        modinfo lustre
         modprobe lustre
         modprobe ldiskfs
         modprobe osd_ldiskfs

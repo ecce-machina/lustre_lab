@@ -146,9 +146,16 @@ build {
 
         depmod -a "$LUSTRE_KERNEL"
 
-        printf '%s\n' lustre ldiskfs osd_ldiskfs > /etc/modules-load.d/lustre.conf
-  
-        modinfo lustre
+        echo lustre > /etc/modules-load.d/lustre.conf
+		echo ldiskfs >> /etc/modules-load.d/lustre.conf
+		echo osd_ldiskfs >> /etc/modules-load.d/lustre.conf
+
+		test "$(wc -l < /etc/modules-load.d/lustre.conf)" -eq 3
+		grep -qx lustre /etc/modules-load.d/lustre.conf
+		grep -qx ldiskfs /etc/modules-load.d/lustre.conf
+		grep -qx osd_ldiskfs /etc/modules-load.d/lustre.conf  
+        
+		modinfo lustre
         modprobe lustre
         modprobe ldiskfs
         modprobe osd_ldiskfs

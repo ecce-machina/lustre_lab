@@ -155,7 +155,6 @@ build {
 		grep -qx ldiskfs /etc/modules-load.d/lustre.conf
 		grep -qx osd_ldiskfs /etc/modules-load.d/lustre.conf  
         
-		modinfo lustre
         modprobe lustre
         modprobe ldiskfs
         modprobe osd_ldiskfs
@@ -181,6 +180,7 @@ build {
       "test -s /home/packer/.ssh/authorized_keys",
       "grep -q '^ssh-' /home/packer/.ssh/authorized_keys",
       "touch /opt/lustre-helpers/.ssh_key_installed",
+      "sync",
     ]
   }
 }   

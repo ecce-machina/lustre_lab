@@ -171,8 +171,8 @@ build {
       "test -s /home/packer/.ssh/authorized_keys",
       "grep -q '^ssh-' /home/packer/.ssh/authorized_keys",
       "touch /opt/lustre-helpers/.ssh_key_installed",
-      
-      "cat > /etc/systemd/system/lustre-modules.service <<'EOF'\n[Unit]\nDescription=Load Lustre kernel modules\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/sbin/modprobe lustre\nExecStart=/usr/sbin/modprobe ldiskfs\nExecStart=/usr/sbin/modprobe osd_ldiskfs\nRemainAfterExit=yes\n\n[Install]\nWantedBy=multi-user.target\nEOF",
+     
+      "printf '%s\n' '[Unit]' 'Description=Load Lustre kernel modules' 'After=network-online.target' 'Wants=network-online.target' '' '[Service]' 'Type=oneshot' 'ExecStart=/usr/sbin/modprobe lustre' 'ExecStart=/usr/sbin/modprobe ldiskfs' 'ExecStart=/usr/sbin/modprobe osd_ldiskfs' 'RemainAfterExit=yes' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/lustre-modules.service", 
       "systemctl daemon-reload",
       "systemctl enable lustre-modules.service",
       "sync",

@@ -21,6 +21,9 @@ OST_SIZE="${OST_SIZE:-50G}"
 
 SSH_USER="${SSH_USER:-packer}"
 SSH_KEY="${SSH_KEY:-}"
+[[ -n "$SSH_KEY" ]] || die "SSH_KEY must be set (e.g. SSH_KEY=/home/L3/.ssh/lustre_lab)"
+[[ -f "$SSH_KEY" ]] || die "SSH private key not found: $SSH_KEY"
+
 
 die() {
     echo "ERROR: $*" >&2
@@ -39,6 +42,7 @@ wait_for_ssh() {
     for _ in $(seq 1 60); do
         if ssh \
             -i "$SSH_KEY" \
+            -o IdentitiesOnly=yes \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
@@ -144,6 +148,8 @@ fi
 wait_for_ssh "$MDS_IP"
 
 ssh \
+    -i "$SSH_KEY" \
+    -o IdentitiesOnly=yes \
     -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \
     "${SSH_USER}@${MDS_IP}" \
@@ -187,6 +193,8 @@ for i in $(seq 0 $((OSS_COUNT - 1))); do
     wait_for_ssh "$ip"
 
     ssh \
+        -i "$SSH_KEY" \
+        -o IdentitiesOnly=yes \
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
         "${SSH_USER}@${ip}" \
@@ -231,6 +239,8 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
     wait_for_ssh "$ip"
 
     ssh \
+        -i "$SSH_KEY" \
+        -o IdentitiesOnly=yes \
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
         "${SSH_USER}@${ip}" \

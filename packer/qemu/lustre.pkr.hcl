@@ -84,6 +84,7 @@ build {
       "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-helpers",
       "cd /opt/lustre-helpers",
       "bash install_pkgs.sh",
+      "bash workloads/install.sh",
     ]
   }
 

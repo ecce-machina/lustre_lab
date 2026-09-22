@@ -85,6 +85,8 @@ build {
       "cd /opt/lustre-helpers",
       "bash install_pkgs.sh",
       "bash workloads/install.sh",
+      "sudo dnf install -y epel-release",
+      "sudo dnf install -y munge munge-libs slurm slurm-slurmd slurm-slurmctld fio",
     ]
   }
 

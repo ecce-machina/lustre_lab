@@ -251,6 +251,36 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
             --mountpoint /mnt/lustre"
 done
 
+# Configure Slurm across Lustre clients.
+MUNGE_KEY="$(openssl rand -base64 32)"
+CLIENT_RANGE="$(seq -s, -f 'lustre-client%.0f' 1 "$CLIENT_COUNT")"
+CONTROLLER_HOST="lustre-client1"
+
+for i in $(seq 0 $((CLIENT_COUNT - 1))); do
+    num=$((i + 1))
+    ip="192.168.150.$((30 + i))"
+
+    if [[ "$num" -eq 1 ]]; then
+        role="controller"
+    else
+        role="compute"
+    fi
+
+    ssh \
+        -i "$SSH_KEY" \
+        -o IdentitiesOnly=yes \
+        -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null \
+        "${SSH_USER}@${ip}" \
+        "sudo /opt/lustre-helpers/configure_slurm_client.sh \
+            --role ${role} \
+            --node-name lustre-client${num} \
+            --client-range '${CLIENT_RANGE}' \
+            --cpu-per-client ${VM_VCPUS} \
+            --controller-host ${CONTROLLER_HOST} \
+            --munge-key '${MUNGE_KEY}'"
+done
+
 echo
 echo "Lustre lab created:"
 echo "  MDS: ${MDS_IP}"

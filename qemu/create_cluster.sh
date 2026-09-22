@@ -21,8 +21,15 @@ OST_SIZE="${OST_SIZE:-50G}"
 
 SSH_USER="${SSH_USER:-packer}"
 SSH_KEY="${SSH_KEY:-}"
-[[ -n "$SSH_KEY" ]] || die "SSH_KEY must be set (e.g. SSH_KEY=/home/L3/.ssh/lustre_lab)"
-[[ -f "$SSH_KEY" ]] || die "SSH private key not found: $SSH_KEY"
+[[ -n "$SSH_KEY" ]] || {
+    echo "SSH_KEY must be set (e.g. SSH_KEY=/home/L3/.ssh/lustre_lab)"
+    exit 1
+}
+
+[[ -f "$SSH_KEY" ]] || {
+    echo "SSH private key not found: $SSH_KEY"
+    exit 1
+}
 
 
 die() {

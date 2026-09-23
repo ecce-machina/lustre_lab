@@ -10,6 +10,11 @@ From the repository root:
 
 ```bash
 cd packer/gcp
+
+cp lustre.auto.pkrvars.hcl.example lustre.auto.pkrvars.hcl
+
+# Edit lustre.auto.pkrvars.hcl and set your GCP project ID and zone.
+
 packer init .
 packer build .
 ```

@@ -1,71 +1,46 @@
-# lustre_helpers
+# lustre_lab
 
-### Collection of scripts to quickly spin up a lustre clusters using qemu or cloud
+`lustre_lab` is a project for building disposable Lustre test clusters for learning, development, troubleshooting, and reproducer work.
 
-You need to create a bridge on the host server
+The lab can currently be deployed using three backends:
 
-```
-# create the bridge
-ip link add name br-lustre type bridge
+| Backend | Use case |
+| --- | --- |
+| **QEMU/KVM** | Local development and testing using libvirt/QEMU VMs |
+| **Google Cloud (GCP)** | Cloud-based Lustre test clusters on Google Compute Engine |
+| **Amazon Web Services (AWS)** | Cloud-based Lustre test clusters on Amazon EC2 |
 
-# bring it up
-ip link set br-lustre up
+Each backend has its own configuration and deployment instructions.
 
-# (optional) give it an IP for host-side access
-ip addr add 192.168.100.1/24 dev br-lustre
+## QEMU/KVM
 
-```
+The QEMU backend uses Packer to build a reusable VM image and libvirt/KVM to create disposable Lustre clusters locally.
 
-Then you create a VM with the Rocky ISO
+It supports configurable numbers of OSS and client nodes, automated Lustre configuration, and Slurm across the client nodes.
 
-```
-virt-install --name rocky9-lustre-build --memory 4096 --vcpus 2 --cpu host \ 
-    --disk path=<path to vms>/rocky9-lustre-build2.qcow2,size=40,format=qcow2 \ 
-     --os-variant rocky9 --network bridge=br-lustre,model=virtio --graphics spice \
-      --console pty,target_type=serial --cdrom ~/Downloads/Rocky-9.7-x86_64-dvd.iso
+See [`qemu/README.md`](qemu/README.md).
 
-```
+## Google Cloud
 
-First step is to install the packages required to build lustre from src, scp it on the VM and run it
+The GCP backend uses Terraform to provision the Lustre infrastructure in Google Cloud.
 
-```
-./install_pkgs.sh
-```
+See [`gcp/README.md`](gcp/README.md).
 
-A reboot of the VM is required to boot the newer kernel version, then run the lustre build script
+## AWS
 
-```
-./build_lustre_script.sh
-```
+The AWS backend uses Terraform to provision the Lustre infrastructure in AWS.
 
-You can use the qcow image you now have a a golden image to create server and client nodes for a lustre
-cluster
+See [`aws/README.md`](aws/README.md).
 
-Create a qcow image for the Lustre target(OST/MDT/MGT)
+## Common layout
 
-```
-qemu-img create -f raw /var/lib/libvirt/images/mdt1.raw 20G
-qemu-img info /var/lib/libvirt/images/mdt1.raw
-ls -lh /var/lib/libvirt/images/mdtt1.raw
+Regardless of backend, the goal is to provide a small, reproducible Lustre environment consisting of:
 
-virsh attach-disk rocky9-lustre-build \
-  /var/lib/libvirt/images/ost1.raw \
-  vdb \
-  --driver qemu \
-  --subdriver raw \
-  --targetbus virtio \
-  --persistent
-```
+- MGS/MDT
+- One or more OSS/OSTs
+- One or more Lustre clients
+- Slurm-capable client nodes where supported
 
-Once that's done, you can attach a drive to the VM and mkfs.lustre with a ldiskfs backend
+The environments are intended to be disposable: create a cluster, reproduce or investigate a behavior, collect results, and tear the cluster down.
 
-First the MDS/MGS node
-```
-mkfs.lustre --mdt --mgs --fsname=lustre1 --index=0 --backfstype=ldiskfs /dev/vdb
-```
-
-Then each OSS node
-
-```
- mkfs.lustre   --ost   --mgsnode=<MGS NID>  --backfstype=ldiskfs --fsname=lustre1   --index=2   /dev/vdb
-```
+Backend-specific prerequisites, configuration, deployment, and cleanup instructions are documented in the corresponding README.

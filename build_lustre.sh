@@ -43,7 +43,14 @@ install_from_source() {
 
     ./configure --enable-server --enable-ldiskfs   
     make
-    make install 
+    make rpms
+
+    echo "Generated Lustre RPMs:"
+    ls -lh ./*.rpm
+
+    dnf -y install ./*.rpm
+
+
 }
 
 install_from_rpms() {

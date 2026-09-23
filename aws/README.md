@@ -1,12 +1,12 @@
-### AWS
+# AWS
 
-# Lustre Lab on AWS
+## Lustre Lab on AWS
 
 This backend deploys a Lustre test cluster on AWS using Terraform.
 
 Before deploying the cluster, a base Lustre image must be built with Packer.
 
-## Build the base image
+### Build the base image
 
 From the repository root:
 
@@ -16,7 +16,7 @@ packer init .
 packer build .
 ```
 
-## Create cluster
+### Create cluster
 
 ```
 cd aws
@@ -26,7 +26,7 @@ terraform init
 terraform apply
 ```
 
-## Verify
+### Verify
 ```
 lfs df -h /mnt/lustre
 
@@ -34,7 +34,7 @@ sinfo
 srun -N2 -n2 hostname
 ```
 
-## Destroy
+### Destroy
 
 ```
 terraform destroy

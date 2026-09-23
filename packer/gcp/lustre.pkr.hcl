@@ -117,7 +117,8 @@ build {
     inline = [
       "set -euxo pipefail",
       "cd /opt/lustre-helpers",
-      "bash build_lustre.sh --method rpm",
+#      "bash build_lustre.sh --method rpm",
+      "bash build_lustre.sh --method source",
       <<-EOT
         LUSTRE_KERNEL="$(
           rpm -qa --qf '%%{NAME} %%{VERSION}-%%{RELEASE}.%%{ARCH}\n' |

@@ -93,7 +93,7 @@ build {
 
     inline = [
       "set -euxo pipefail",
-      "dnf install -y https://s3.ca-central-1.amazonaws.com/amazon-ssm-ca-central-1/latest/linux_amd64/amazon-ssm-agent.rpm",
+      "dnf install -y https://s3.${var.region}..amazonaws.com/amazon-ssm-ca-central-1/latest/linux_amd64/amazon-ssm-agent.rpm",
       "systemctl enable --now amazon-ssm-agent",
       "systemctl is-enabled amazon-ssm-agent",
     ]

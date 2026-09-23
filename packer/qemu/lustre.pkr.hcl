@@ -7,6 +7,15 @@ packer {
   }
 }
 
+variable "ssh_public_key_file" {
+  type = string
+}
+
+variable "qemu_binary" {
+  type    = string
+  default = "qemu-system-x86_64"
+}
+
 variable "repo_url" {
   type    = string
   default = "https://github.com/ecce-machina/lustre_lab.git"
@@ -18,41 +27,42 @@ variable "repo_ref" {
 }
 
 source "qemu" "lustre" {
-  iso_url      = "https://download.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
+  iso_url      = "https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9-latest-x86_64-minimal.iso"
   iso_checksum = "none"
-
-  disk_image = true
-  format     = "qcow2"
 
   output_directory = "output"
   vm_name          = "lustre-lab-rocky9.qcow2"
 
+  format    = "qcow2"
   disk_size = "40G"
 
   memory = 4096
   cpus   = 4
 
-  headless = true
+  headless     = true
+  accelerator  = "kvm"
 
-  ssh_username = "rocky"
-  ssh_timeout  = "20m"
+  qemuargs = [
+    ["-cpu", "host"]
+  ]
+  qemu_binary  = var.qemu_binary
 
+  ssh_username = "packer"
+  ssh_password = "packer"
+  ssh_timeout  = "30m"
+
+  http_directory = "http"
+
+  boot_wait = "10s"
+
+  boot_command = [
+    "<tab><wait>",
+    " inst.text inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg",
+    "<enter>"
+  ]
   net_device     = "virtio-net"
   disk_interface = "virtio"
-  cd_label       = "cidata"
-
-  cd_content = {
-    "meta-data" = <<-EOF
-      instance-id: lustre-packer
-      local-hostname: lustre-packer
-    EOF
-
-    "user-data" = templatefile("${path.root}/cloud-init/user-data", {
-      ssh_key = "{{ .SSHPublicKey }}"
-    })
-  }
 }
-
 
 
 build {
@@ -74,6 +84,9 @@ build {
       "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-helpers",
       "cd /opt/lustre-helpers",
       "bash install_pkgs.sh",
+      "bash workloads/install.sh",
+      "sudo dnf install -y epel-release",
+      "sudo dnf install -y munge munge-libs slurm slurm-slurmd slurm-slurmctld fio",
     ]
   }
 
@@ -134,7 +147,8 @@ build {
 
         test "$(uname -r)" = "$LUSTRE_KERNEL"
 
-        depmod -a
+        depmod -a "$LUSTRE_KERNEL"
+
         modprobe lustre
         modprobe ldiskfs
         modprobe osd_ldiskfs
@@ -143,4 +157,30 @@ build {
       EOT
     ]
   }
-}
+  
+
+  provisioner "file" {
+    source      = var.ssh_public_key_file
+    destination = "/tmp/lustre_lab.pub"
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; sudo -E {{ .Vars }} {{ .Path }}"
+
+    inline = [
+      "set -euxo pipefail",
+      "install -d -m 700 -o packer -g packer /home/packer/.ssh",
+      "install -m 600 -o packer -g packer /tmp/lustre_lab.pub /home/packer/.ssh/authorized_keys",
+      "test -s /home/packer/.ssh/authorized_keys",
+      "grep -q '^ssh-' /home/packer/.ssh/authorized_keys",
+      "touch /opt/lustre-helpers/.ssh_key_installed",
+     
+      "printf '%s\n' '[Unit]' 'Description=Load Lustre kernel modules' 'After=network-online.target' 'Wants=network-online.target' '' '[Service]' 'Type=oneshot' 'ExecStart=/usr/sbin/modprobe lustre' 'ExecStart=/usr/sbin/modprobe ldiskfs' 'ExecStart=/usr/sbin/modprobe osd_ldiskfs' 'RemainAfterExit=yes' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/lustre-modules.service", 
+      "systemctl daemon-reload",
+      "systemctl enable lustre-modules.service",
+      "sync",
+    ]
+  }
+}   
+ 
+

@@ -11,9 +11,14 @@ Before deploying the cluster, a base Lustre image must be built with Packer.
 From the repository root:
 
 ```bash
+# Have AWS credentials configured
 cd packer/aws
 packer init .
 packer build .
+cd ../../aws
+# configure terraform.tfvars
+terraform init
+terraform apply
 ```
 
 ### Create cluster

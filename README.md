@@ -44,3 +44,20 @@ Regardless of backend, the goal is to provide a small, reproducible Lustre envir
 The environments are intended to be disposable: create a cluster, reproduce or investigate a behavior, collect results, and tear the cluster down.
 
 Backend-specific prerequisites, configuration, deployment, and cleanup instructions are documented in the corresponding README.
+
+All 3 "provisioners" follow the same build/create logic:
+
+```
+```text
+                  lustre_lab
+                      |
+        +-------------+-------------+
+        |             |             |
+       QEMU          GCP           AWS
+        |             |             |
+      Packer        Packer        Packer
+        |             |             |
+     libvirt       Terraform     Terraform
+        |             |             |
+        +------ Lustre cluster ------+
+```

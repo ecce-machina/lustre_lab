@@ -1,51 +1,41 @@
-## Spin up a small lab cluster on GCP
+# Lustre Lab on Google Cloud
 
-First, configure the settings for the cluster you want to build in variables.tf
+This backend deploys a Lustre test cluster on Google Cloud using Terraform.
 
-Then, we need to build the lustre image so it can be used for the client/MDS/OSS nodes
+Before deploying the cluster, a base Lustre image must be built with Packer.
 
-```
-cd lustre_helpers/gcp
-terraform apply -target=google_compute_instance.image_builder
-```
+## Build the base image
 
-Check the progress:
+From the repository root:
 
-```
-gcloud compute ssh lustre-image-builder \
-  --zone <your zone> \
-  --command='sudo tail -f /var/log/lustre-image-build.log'
+```bash
+cd packer/gcp
+packer init .
+packer build .
 ```
 
-It basically installs all the rpms required and the e2fs-progs with the wc patch along with all the lustre rpms(You can also build from source if needed)
-
-Once it's completed, you stop the image builder:
+## Create the cluster with tf
 
 ```
-gcloud compute instances stop lustre-image-builder \
-  --zone us-central1-a
-```
+cd gcp
+cp terraform.tfvars.example terraform.tfvars
 
-And you can run apply for the rest. According to your variables, it'll create clients, mds and oss.
-
-```
+terraform init
 terraform apply
 ```
 
-You can test slrum on lustre-client1:
+## Verify with gcloud ssh or direct ssh to a client
 
 ```
-$ gcloud compute ssh lustre-client1 \
-  --zone <your zone> \
-  --command='sinfo'
-PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-debug*       up   infinite      4   idle lustre-client[1-4]
+lctl df
+lctl dl
 
-$ gcloud compute ssh lustre-client1 \
-  --zone <your zone> \
-  --command='srun -N4 hostname'
-lustre-client2
-lustre-client1
-lustre-client3
-lustre-client4
+sinfo
+srun -N2 -n2 hostname
+```
+
+## Destroy
+
+```
+terraform destroy
 ```

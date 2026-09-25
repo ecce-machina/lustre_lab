@@ -46,6 +46,11 @@ variable "image_name_prefix" {
   default = "lustre-lab-rocky9"
 }
 
+variable "build_method" {
+  type    = string
+  default = "rpm"
+}
+
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
 }
@@ -117,27 +122,42 @@ build {
     inline = [
       "set -euxo pipefail",
       "cd /opt/lustre-helpers",
-#      "bash build_lustre.sh --method rpm",
-      "bash build_lustre.sh --method source",
+      "bash build_lustre.sh --method ${var.build_method}",
       <<-EOT
-        LUSTRE_KERNEL="$(
-          rpm -qa --qf '%%{NAME} %%{VERSION}-%%{RELEASE}.%%{ARCH}\n' |
-            awk '$1 == "kernel" && $2 ~ /_lustre/ {print $2}' |
-            sort -V |
-            tail -1
-        )"
+      if [[ "${var.build_method}" == "source" ]]; then
+          echo "Selecting kernel for source-built Lustre modules"
+
+          LUSTRE_KERNEL="$(
+            find /lib/modules -type f -path '*/extra/lustre/fs/lustre.ko' -printf '%h\n' |
+              sed 's#/extra/lustre/fs##' |
+              xargs -r basename |
+              sort -V |
+              tail -1
+          )"
+        else
+          echo "Selecting Whamcloud Lustre kernel"
+
+          LUSTRE_KERNEL="$(
+            rpm -qa --qf '%%{NAME} %%{VERSION}-%%{RELEASE}.%%{ARCH}\n' |
+              awk '$1 == "kernel" && $2 ~ /_lustre/ {print $2}' |
+              sort -V |
+              tail -1
+          )"
+        fi
 
         if [[ -z "$LUSTRE_KERNEL" ]]; then
-          echo "ERROR: could not find installed Lustre kernel"
-          rpm -qa | grep '^kernel' | sort
+          echo "ERROR: could not determine Lustre kernel for build method ${var.build_method}"
+          rpm -qa | grep '^kernel' | sort || true
+          find /lib/modules -name 'lustre.ko*' -print || true
           exit 1
         fi
 
+        echo "Selected Lustre kernel: $LUSTRE_KERNEL"
         echo "$LUSTRE_KERNEL" > /opt/lustre-helpers/.lustre_kernel
 
         grubby --set-default "/boot/vmlinuz-$LUSTRE_KERNEL"
 
-        touch /opt/lustre-helpers/.build_done
+        touch /opt/lustre-helpers/.build_done 
       EOT
     ]
   }

@@ -20,6 +20,10 @@ sudo dnf -y install *.rpm
 install_from_source() {
     echo "Installing kernel sources"
 
+    ## Install RPMS tools deps
+    dnf -y install \
+        kernel-abi-stablelists \
+        kernel-rpm-macros
     ## Download kernel sources 
     dnf download --source kernel-$(uname -r)
     rpm -ihv kernel*rpm

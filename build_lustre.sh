@@ -52,8 +52,13 @@ install_from_source() {
     echo "Generated Lustre RPMs:"
     ls -lh ./*.rpm
 
-    dnf -y install ./*.rpm
-
+#    dnf -y install ./*.rpm
+    dnf -y install \
+      ./kmod-lustre-[0-9]*.rpm \
+      ./kmod-lustre-osd-ldiskfs-[0-9]*.rpm \
+      ./lustre-[0-9]*.rpm \
+      ./lustre-osd-ldiskfs-mount-[0-9]*.rpm \
+      ./lustre-iokit-[0-9]*.rpm
 
 }
 

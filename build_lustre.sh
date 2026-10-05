@@ -2,10 +2,12 @@
 set -euo pipefail
 
 METHOD="source"
+LUSTRE_REF="master"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --method) METHOD="$2"; shift 2 ;;
+    --lustre-ref) LUSTRE_REF="$2"; shift 2 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
@@ -43,6 +45,9 @@ install_from_source() {
     cd 
     git clone https://github.com/lustre/lustre-release.git
     cd lustre-release/
+    git checkout "$LUSTRE_REF"
+    git describe --always --tags --dirty
+
     ./autogen.sh
 
     ./configure --enable-server --enable-ldiskfs   

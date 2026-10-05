@@ -60,7 +60,7 @@ resource "google_compute_instance" "mds" {
   boot_disk {
     initialize_params {
       image = "projects/${var.project_id}/global/images/family/${var.image_family}"
-      size  = 80
+      size  = 100
       type  = "pd-balanced"
     }
   }
@@ -98,7 +98,7 @@ resource "google_compute_instance" "oss" {
   boot_disk {
     initialize_params {
       image = "projects/${var.project_id}/global/images/family/${var.image_family}"
-      size  = 80
+      size  = 100
       type  = "pd-balanced"
     }
   }
@@ -144,7 +144,7 @@ resource "google_compute_instance" "client" {
   boot_disk {
     initialize_params {
       image = "projects/${var.project_id}/global/images/family/${var.image_family}"
-      size  = 80
+      size  = 100
       type  = "pd-balanced"
     }
   }

@@ -11,7 +11,7 @@ variable "image_name" {
 }
 
 variable "image_family" {
-  default = "lustre-rocky9"
+  default = "lustre-lab-rocky9"
 }
 
 variable "machine_type" {
@@ -19,7 +19,7 @@ variable "machine_type" {
 }
 
 variable "boot_disk_size_gb" {
-  default = 80
+  default = 100
 }
 
 variable "fsname" {
@@ -31,7 +31,7 @@ variable "cluster_subnet_cidr" {
 }
 
 variable "mdt_disk_size_gb" {
-  default = 80
+  default = 100 
 }
 
 variable "ost_disk_size_gb" {
@@ -40,12 +40,12 @@ variable "ost_disk_size_gb" {
 
 variable "oss_count" {
   type    = number
-  default = 4
+  default = 3
 }
 
 variable "client_count" {
   type    = number
-  default = 4
+  default = 2
 }
 
 

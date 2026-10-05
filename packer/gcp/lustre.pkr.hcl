@@ -36,6 +36,11 @@ variable "repo_ref" {
   default = "main"
 }
 
+variable "lustre_ref" {
+  type    = string
+  default = "master"
+}
+
 variable "image_family" {
   type    = string
   default = "lustre-lab-rocky9"
@@ -52,8 +57,10 @@ variable "build_method" {
 }
 
 locals {
-  timestamp = regex_replace(timestamp(), "[- TZ:]", "")
+  timestamp       = regex_replace(timestamp(), "[- TZ:]", "")
+  lustre_ref_safe = regex_replace(lower(var.lustre_ref), "[^a-z0-9-]", "-")
 }
+
 
 source "googlecompute" "lustre" {
   project_id   = var.project_id
@@ -67,7 +74,7 @@ source "googlecompute" "lustre" {
 
   image_name        = "${var.image_name_prefix}-${local.timestamp}"
   image_description = "Rocky Linux 9 with Lustre server kernel and modules"
-  image_family 		= var.image_family
+  image_family      = var.image_family
 
   metadata = {
     enable-oslogin = "FALSE"
@@ -122,7 +129,7 @@ build {
     inline = [
       "set -euxo pipefail",
       "cd /opt/lustre-helpers",
-      "bash build_lustre.sh --method ${var.build_method}",
+      "bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref}",
       <<-EOT
       if [[ "${var.build_method}" == "source" ]]; then
           echo "Selecting kernel for source-built Lustre modules"

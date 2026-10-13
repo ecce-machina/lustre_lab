@@ -72,7 +72,7 @@ source "googlecompute" "lustre" {
   source_image_family     = "rocky-linux-9"
   source_image_project_id = ["rocky-linux-cloud"]
 
-  image_name        = "${var.image_name_prefix}-${local.timestamp}"
+  image_name        = "${var.image_name_prefix}-${local.lustre_ref_safe}-${local.timestamp}"
   image_description = "Rocky Linux 9 with Lustre server kernel and modules"
   image_family      = var.image_family
 
@@ -104,11 +104,11 @@ build {
     inline = [
       "set -euxo pipefail",
       "dnf -y install git",
-      "rm -rf /opt/lustre-helpers",
-      "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-helpers",
-      "cd /opt/lustre-helpers",
+      "rm -rf /opt/lustre-lab",
+      "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-lab",
+      "cd /opt/lustre-lab",
       "bash install_pkgs.sh",
-      "touch /opt/lustre-helpers/.packages_done",
+      "touch /opt/lustre-lab/.packages_done",
     ]
   }
 
@@ -128,7 +128,7 @@ build {
 
     inline = [
       "set -euxo pipefail",
-      "cd /opt/lustre-helpers",
+      "cd /opt/lustre-lab",
       "bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref}",
       <<-EOT
       if [[ "${var.build_method}" == "source" ]]; then
@@ -160,11 +160,11 @@ build {
         fi
 
         echo "Selected Lustre kernel: $LUSTRE_KERNEL"
-        echo "$LUSTRE_KERNEL" > /opt/lustre-helpers/.lustre_kernel
+        echo "$LUSTRE_KERNEL" > /opt/lustre-lab/.lustre_kernel
 
         grubby --set-default "/boot/vmlinuz-$LUSTRE_KERNEL"
 
-        touch /opt/lustre-helpers/.build_done 
+        touch /opt/lustre-lab/.build_done
       EOT
     ]
   }
@@ -186,7 +186,7 @@ build {
     inline = [
       "set -euxo pipefail",
       <<-EOT
-        LUSTRE_KERNEL="$(cat /opt/lustre-helpers/.lustre_kernel)"
+        LUSTRE_KERNEL="$(cat /opt/lustre-lab/.lustre_kernel)"
 
         echo "Expected kernel: $LUSTRE_KERNEL"
         echo "Running kernel:  $(uname -r)"
@@ -209,8 +209,8 @@ build {
 
         lsmod | grep -E 'lustre|lnet|ldiskfs|osd'
 
-        touch /opt/lustre-helpers/.modules_verified
-        touch /opt/lustre-helpers/IMAGE_BUILD_DONE
+        touch /opt/lustre-lab/.modules_verified
+        touch /opt/lustre-lab/IMAGE_BUILD_DONE
       EOT
     ]
   }

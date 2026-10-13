@@ -59,7 +59,7 @@ resource "google_compute_instance" "mds" {
 
   boot_disk {
     initialize_params {
-      image = "projects/${var.project_id}/global/images/family/${var.image_family}"
+      image = "projects/${var.project_id}/global/images/${var.image_name}"
       size  = 100
       type  = "pd-balanced"
     }
@@ -80,7 +80,9 @@ resource "google_compute_instance" "mds" {
     #!/bin/bash
     set -euxo pipefail
 
-    cd /opt/lustre-helpers
+    ${local.configure_cluster_hosts}
+
+    cd /opt/lustre-lab
     bash configure_lustre_role.sh \
       --role mds \
       --fsname ${var.fsname} \
@@ -97,7 +99,7 @@ resource "google_compute_instance" "oss" {
 
   boot_disk {
     initialize_params {
-      image = "projects/${var.project_id}/global/images/family/${var.image_family}"
+      image = "projects/${var.project_id}/global/images/${var.image_name}"
       size  = 100
       type  = "pd-balanced"
     }
@@ -118,7 +120,9 @@ resource "google_compute_instance" "oss" {
     #!/bin/bash
     set -euxo pipefail
 
-    cd /opt/lustre-helpers
+    ${local.configure_cluster_hosts}
+
+    cd /opt/lustre-lab
 
     bash configure_lustre_role.sh \
       --role oss \
@@ -143,7 +147,7 @@ resource "google_compute_instance" "client" {
 
   boot_disk {
     initialize_params {
-      image = "projects/${var.project_id}/global/images/family/${var.image_family}"
+      image = "projects/${var.project_id}/global/images/${var.image_name}"
       size  = 100
       type  = "pd-balanced"
     }
@@ -159,8 +163,11 @@ resource "google_compute_instance" "client" {
     #!/bin/bash
     set -euxo pipefail
 
-    cd /opt/lustre-helpers
+    cd /opt/lustre-lab
 
+    ${local.configure_cluster_hosts}
+
+    ## waiting for MGS setup
     sleep 120
 
     bash configure_lustre_role.sh \

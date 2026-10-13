@@ -3,7 +3,7 @@ variable "region" {}
 variable "zone" {}
 
 variable "repo_url" {
-  description = "GitHub repo URL for lustre-helpers"
+  description = "GitHub repo URL for lustre-lab"
 }
 
 variable "image_name" {
@@ -31,7 +31,7 @@ variable "cluster_subnet_cidr" {
 }
 
 variable "mdt_disk_size_gb" {
-  default = 100 
+  default = 100
 }
 
 variable "ost_disk_size_gb" {

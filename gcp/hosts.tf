@@ -16,4 +16,12 @@ locals {
     bash /opt/lustre-lab/configure_cluster_hosts.sh /tmp/lustre-lab-hosts
     rm -f /tmp/lustre-lab-hosts
   SCRIPT
+
+  harness_ost_hosts = join(" ", [
+    for i in range(var.oss_count) : "lustre-oss${i + 1}"
+  ])
+
+  harness_ost_devices = join(" ", [
+    for i in range(var.oss_count) : "/dev/disk/by-id/google-ost${i}"
+  ])
 }

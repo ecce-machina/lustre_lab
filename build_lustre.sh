@@ -53,27 +53,32 @@ install_from_source() {
     ./configure --enable-server --enable-ldiskfs   
     make
     make rpms
-	
+
 	echo "RPM arguments passed to dnf:"
-    printf '%s\n' \
-      ./kmod-lustre-[0-9]*.x86_64.rpm \
-      ./kmod-lustre-osd-ldiskfs-[0-9]*.x86_64.rpm \
-      ./lustre-[0-9]*.x86_64.rpm \
-      ./lustre-osd-ldiskfs-mount-[0-9]*.x86_64.rpm \
-      ./lustre-iokit-[0-9]*.x86_64.rpm
-    
-    echo "Generated Lustre RPMs:"
-    ls -lh ./*.rpm
+	printf '%s\n' \
+	  ./kmod-lustre-[0-9]*.x86_64.rpm \
+	  ./kmod-lustre-osd-ldiskfs-[0-9]*.x86_64.rpm \
+	  ./kmod-lustre-tests-[0-9]*.x86_64.rpm \
+	  ./lustre-[0-9]*.x86_64.rpm \
+      ./lustre-devel-[0-9]*.x86_64.rpm \
+	  ./lustre-tests-[0-9]*.x86_64.rpm \
+	  ./lustre-osd-ldiskfs-mount-[0-9]*.x86_64.rpm \
+	  ./lustre-iokit-[0-9]*.x86_64.rpm
 
-#    dnf -y install ./*.rpm
-    rm -f ./*.src.rpm
+	echo "Generated Lustre RPMs:"
+	ls -lh ./*.rpm
 
-    dnf -y install \
-      ./kmod-lustre-[0-9]*.x86_64.rpm \
-      ./kmod-lustre-osd-ldiskfs-[0-9]*.x86_64.rpm \
-      ./lustre-[0-9]*.x86_64.rpm \
-      ./lustre-osd-ldiskfs-mount-[0-9]*.x86_64.rpm \
-      ./lustre-iokit-[0-9]*.x86_64.rpm
+	rm -f ./*.src.rpm
+
+	dnf -y install \
+	  ./kmod-lustre-[0-9]*.x86_64.rpm \
+	  ./kmod-lustre-osd-ldiskfs-[0-9]*.x86_64.rpm \
+	  ./kmod-lustre-tests-[0-9]*.x86_64.rpm \
+	  ./lustre-[0-9]*.x86_64.rpm \
+      ./lustre-devel-[0-9]*.x86_64.rpm \
+	  ./lustre-tests-[0-9]*.x86_64.rpm \
+	  ./lustre-osd-ldiskfs-mount-[0-9]*.x86_64.rpm \
+	  ./lustre-iokit-[0-9]*.x86_64.rpm
 }
 
 install_from_rpms() {

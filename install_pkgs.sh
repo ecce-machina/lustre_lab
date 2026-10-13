@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 
 #### virt-install \
  # --name rocky9-lustre-build1 \
@@ -30,5 +30,17 @@ dnf install -y \
 
 dnf config-manager --set-enabled devel-debuginfo
 dnf install -y kernel-debuginfo kernel-devel
+
+## Lustre test harness dependencies
+
+dnf install -y \
+  pdsh pdsh-rcmd-ssh \
+  openssh-clients \
+  rsync expect \
+  bc jq \
+  lsof psmisc procps-ng \
+  iproute iputils \
+  e2fsprogs \
+  attr acl
 
 ## REBOOT REQUIRED HERE

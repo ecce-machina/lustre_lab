@@ -174,10 +174,15 @@ resource "google_compute_instance" "client" {
       --mgs-nid 10.10.0.10@tcp \
       --mountpoint /mnt/lustre
 
-    MDS_DEV=dev/disk/by-id/google-mdt0 \
+    MDS_DEV=/dev/disk/by-id/google-mdt0 \
     OST_HOSTS="${local.harness_ost_hosts}" \
     OST_DEVICES="${local.harness_ost_devices}" \
     bash configure_harness.sh
+
+    %{if count.index == 0}
+        OST_HOSTS="${local.harness_ost_hosts}" \
+            bash deploy_harness.sh
+    %{endif}
 
     bash configure_slurm_client.sh \
       --role ${count.index == 0 ? "controller" : "worker"} \

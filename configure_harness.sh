@@ -32,11 +32,13 @@ OSTCOUNT=$OSTCOUNT
 mds_HOST=$MDS_HOST
 mgs_HOST=$MDS_HOST
 MDSDEV1=$MDS_DEV
+mds1_MOUNT=/mnt/mdt0
 CONFIG
 
 for ((i=0; i<OSTCOUNT; i++)); do
     printf 'ost%d_HOST=%q\n' "$((i+1))" "${ost_hosts[i]}" >> "$OUTPUT"
     printf 'OSTDEV%d=%q\n' "$((i+1))" "${ost_devices[i]}" >> "$OUTPUT"
+    printf 'ost%d_MOUNT=/mnt/ost%d\n' "$((i+1))" "$i" >> "$OUTPUT"
 done
 
 cat >> "$OUTPUT" <<CONFIG
@@ -44,8 +46,10 @@ cat >> "$OUTPUT" <<CONFIG
 MGSNID=$MGSNID
 PDSH="pdsh -S -Rssh -w"
 
+RUNAS_ID=1000
+RUNAS_GID=1005
+
 . $STOCK_CONFIG
 CONFIG
 
 echo "Generated $OUTPUT"
-

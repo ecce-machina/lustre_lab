@@ -87,7 +87,6 @@ resource "google_compute_instance" "mds" {
       --role mds \
       --fsname ${var.fsname} \
       --mdt-dev /dev/disk/by-id/google-mdt0 \
-      --format true
   EOF
 }
 
@@ -130,7 +129,6 @@ resource "google_compute_instance" "oss" {
       --mgs-nid 10.10.0.10@tcp \
       --ost-dev /dev/disk/by-id/google-ost${count.index} \
       --index-base ${count.index} \
-      --format true
   EOF
 
   depends_on = [

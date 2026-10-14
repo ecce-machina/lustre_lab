@@ -8,7 +8,6 @@ MDT_DEV=""
 OST_DEVS=()
 INDEX_BASE=0
 MOUNTPOINT="/mnt/lustre"
-FORMAT="true"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -19,7 +18,6 @@ while [[ $# -gt 0 ]]; do
     --ost-dev) OST_DEVS+=("$2"); shift 2 ;;
     --index-base) INDEX_BASE="$2"; shift 2 ;;
     --mountpoint) MOUNTPOINT="$2"; shift 2 ;;
-    --format) FORMAT="$2"; shift 2 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
@@ -69,7 +67,10 @@ case "$ROLE" in
   mds)
     [[ -n "$MDT_DEV" ]] || { echo "Missing --mdt-dev"; exit 1; }
 
-    if [[ "$FORMAT" == "true" ]]; then
+    if tunefs.lustre --dryrun "$MDT_DEV" >/dev/null 2>&1; then
+      echo "Existing Lustre target found on $MDT_DEV; preserving it"
+    else
+      echo "No existing Lustre target found on $MDT_DEV; formatting it"
       mkfs.lustre \
         --fsname="$FSNAME" \
         --mgs \
@@ -77,11 +78,10 @@ case "$ROLE" in
         --index=0 \
         "$MDT_DEV"
     fi
-
-    mkdir -p /mnt/mdt0
-    mount -t lustre "$MDT_DEV" /mnt/mdt0
-	install_node_exporter
-    ;;
+        mkdir -p /mnt/mdt0
+        mount -t lustre "$MDT_DEV" /mnt/mdt0
+        install_node_exporter
+        ;;
 
   oss)
     [[ "${#OST_DEVS[@]}" -gt 0 ]] || { echo "Missing --ost-dev"; exit 1; }
@@ -91,20 +91,17 @@ case "$ROLE" in
     for dev in "${OST_DEVS[@]}"; do
       index=$((INDEX_BASE + i))
 
-      if [[ "$FORMAT" == "true" ]]; then
-          if  mkfs.lustre \
+      if tunefs.lustre --dryrun "$dev" >/dev/null 2>&1; then
+        echo "Existing Lustre target found on $dev; preserving it"
+      else
+        echo "No existing Lustre target found on $dev; formatting OST index $index"
+        mkfs.lustre \
               --fsname="$FSNAME" \
               --ost \
               --mgsnode="$MGS_NID" \
               --index="$index" \
-              "$dev"; then
-            echo "Formatted OST index $index on $dev"
-          else
-            echo "mkfs.lustre failed or device already formatted; checking existing Lustre label"
-            tunefs.lustre --dryrun "$dev"
-          fi
+              "$dev"
       fi
-
       mkdir -p "/mnt/ost${index}"
       for attempt in {1..12}; do
           if  mountpoint -q "/mnt/ost${index}"; then
@@ -115,13 +112,17 @@ case "$ROLE" in
               echo "Mounted OST${index} on $dev"
               break
           fi
-          
+
           echo "OST${index} mount failed, retrying in 10s..."
           sleep 10
-     done
+      done
+      if ! mountpoint -q "/mnt/ost${index}"; then
+        echo "ERROR: failed to mount OST${index} after 12 attempts" >&2
+        exit 1
+      fi
       i=$((i + 1))
     done
-	install_node_exporter	
+    install_node_exporter
     ;;
 
   client)
@@ -129,7 +130,7 @@ case "$ROLE" in
 
     mkdir -p "$MOUNTPOINT"
     mount -t lustre "${MGS_NID}:/${FSNAME}" "$MOUNTPOINT"
-	install_node_exporter
+    install_node_exporter
     ;;
 
   *)

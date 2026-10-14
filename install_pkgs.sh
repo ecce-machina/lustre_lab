@@ -51,4 +51,22 @@ EOF
 
 sshd -t
 
+# Shared SSH identity for isolated Lustre test nodes.
+install -d -m 700 /root/.ssh
+
+if [[ ! -f /root/.ssh/lustre_lab ]]; then
+    ssh-keygen -q -t ed25519 -N '' -f /root/.ssh/lustre_lab
+fi
+
+cat /root/.ssh/lustre_lab.pub > /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+cat > /root/.ssh/config <<'EOF'
+Host lustre-*
+    IdentityFile /root/.ssh/lustre_lab
+    StrictHostKeyChecking accept-new
+EOF
+chmod 600 /root/.ssh/config
+
+
 ## REBOOT REQUIRED HERE

@@ -4,7 +4,7 @@ set -euo pipefail
 FSNAME=${FSNAME:-lustrefs}
 MGSNID=${MGSNID:-10.10.0.10@tcp}
 MDS_HOST=${MDS_HOST:-lustre-mds}
-MDS_DEV=${MDS_DEV:-?Set MDS_DEV}
+MDS_DEV=${MDS_DEV:?Set MDS_DEV}
 OUTPUT=${OUTPUT:-/opt/lustre-lab/harness/cluster.sh}
 STOCK_CONFIG=/usr/lib64/lustre/tests/cfg/local.sh
 

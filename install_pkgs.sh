@@ -43,4 +43,12 @@ dnf install -y \
   e2fsprogs \
   attr acl
 
+## allow root ssh for pdsh
+cat >/etc/ssh/sshd_config.d/90-lustre-lab.conf <<'EOF'
+PermitRootLogin prohibit-password
+PubkeyAuthentication yes
+EOF
+
+sshd -t
+
 ## REBOOT REQUIRED HERE

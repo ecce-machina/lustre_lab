@@ -25,6 +25,11 @@ resource "google_compute_firewall" "lustre_internal" {
   source_ranges = [var.cluster_subnet_cidr]
 }
 
+data "google_compute_image" "lustre" {
+  project = var.project_id
+  family  = "lustre-lab-rocky9"
+}
+
 resource "google_compute_firewall" "lustre_ssh" {
   name    = "lustre-allow-ssh"
   network = google_compute_network.lustre.name
@@ -59,7 +64,7 @@ resource "google_compute_instance" "mds" {
 
   boot_disk {
     initialize_params {
-      image = "projects/${var.project_id}/global/images/${var.image_name}"
+      image = data.google_compute_image.lustre.self_link
       size  = 100
       type  = "pd-balanced"
     }
@@ -98,7 +103,7 @@ resource "google_compute_instance" "oss" {
 
   boot_disk {
     initialize_params {
-      image = "projects/${var.project_id}/global/images/${var.image_name}"
+      image = data.google_compute_image.lustre.self_link
       size  = 100
       type  = "pd-balanced"
     }
@@ -145,7 +150,7 @@ resource "google_compute_instance" "client" {
 
   boot_disk {
     initialize_params {
-      image = "projects/${var.project_id}/global/images/${var.image_name}"
+      image = data.google_compute_image.lustre.self_link
       size  = 100
       type  = "pd-balanced"
     }

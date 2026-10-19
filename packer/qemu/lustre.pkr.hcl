@@ -80,9 +80,9 @@ build {
     inline = [
       "set -euxo pipefail",
       "dnf -y install git",
-      "rm -rf /opt/lustre-helpers",
-      "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-helpers",
-      "cd /opt/lustre-helpers",
+      "rm -rf /opt/lustre-lab",
+      "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-lab",
+      "cd /opt/lustre-lab",
       "bash install_pkgs.sh",
       "bash workloads/install.sh",
       "sudo dnf install -y epel-release",
@@ -106,7 +106,7 @@ build {
 
     inline = [
       "set -euxo pipefail",
-      "cd /opt/lustre-helpers",
+      "cd /opt/lustre-lab",
       "bash build_lustre.sh --method rpm",
       <<-EOT
         LUSTRE_KERNEL="$(
@@ -118,7 +118,7 @@ build {
 
         test -n "$LUSTRE_KERNEL"
 
-        echo "$LUSTRE_KERNEL" > /opt/lustre-helpers/.lustre_kernel
+        echo "$LUSTRE_KERNEL" > /opt/lustre-lab/.lustre_kernel
 
         grubby --set-default "/boot/vmlinuz-$LUSTRE_KERNEL"
       EOT
@@ -143,7 +143,7 @@ build {
       <<-EOT
         set -euxo pipefail
 
-        LUSTRE_KERNEL="$(cat /opt/lustre-helpers/.lustre_kernel)"
+        LUSTRE_KERNEL="$(cat /opt/lustre-lab/.lustre_kernel)"
 
         test "$(uname -r)" = "$LUSTRE_KERNEL"
 
@@ -153,7 +153,7 @@ build {
         modprobe ldiskfs
         modprobe osd_ldiskfs
 
-        touch /opt/lustre-helpers/IMAGE_BUILD_DONE
+        touch /opt/lustre-lab/IMAGE_BUILD_DONE
       EOT
     ]
   }
@@ -173,7 +173,7 @@ build {
       "install -m 600 -o packer -g packer /tmp/lustre_lab.pub /home/packer/.ssh/authorized_keys",
       "test -s /home/packer/.ssh/authorized_keys",
       "grep -q '^ssh-' /home/packer/.ssh/authorized_keys",
-      "touch /opt/lustre-helpers/.ssh_key_installed",
+      "touch /opt/lustre-lab/.ssh_key_installed",
      
       "printf '%s\n' '[Unit]' 'Description=Load Lustre kernel modules' 'After=network-online.target' 'Wants=network-online.target' '' '[Service]' 'Type=oneshot' 'ExecStart=/usr/sbin/modprobe lustre' 'ExecStart=/usr/sbin/modprobe ldiskfs' 'ExecStart=/usr/sbin/modprobe osd_ldiskfs' 'RemainAfterExit=yes' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/lustre-modules.service", 
       "systemctl daemon-reload",

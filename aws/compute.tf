@@ -42,7 +42,7 @@ resource "aws_instance" "mgs" {
 
     echo "Using MDT device: $MDT_DEV"
 
-    bash /opt/lustre-helpers/configure_lustre_role.sh \
+    bash /opt/lustre-lab/configure_lustre_role.sh \
       --role mds \
       --fsname ${var.fsname} \
       --mdt-dev "$MDT_DEV"
@@ -111,7 +111,7 @@ resource "aws_instance" "oss" {
 
     echo "Using OST device: $OST_DEV"
 
-    bash /opt/lustre-helpers/configure_lustre_role.sh \
+    bash /opt/lustre-lab/configure_lustre_role.sh \
       --role oss \
       --fsname ${var.fsname} \
       --mgs-nid ${aws_instance.mgs.private_ip}@tcp \
@@ -138,11 +138,11 @@ resource "aws_instance" "client" {
   iam_instance_profile = aws_iam_instance_profile.image_builder.name
 
   associate_public_ip_address = true
-  user_data = <<-EOF
+  user_data                   = <<-EOF
     #!/bin/bash
     set -euxo pipefail
 
-    bash /opt/lustre-helpers/configure_lustre_role.sh \
+    bash /opt/lustre-lab/configure_lustre_role.sh \
       --role client \
       --fsname ${var.fsname} \
       --mgs-nid ${aws_instance.mgs.private_ip}@tcp \

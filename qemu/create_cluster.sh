@@ -160,7 +160,7 @@ ssh \
     -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \
     "${SSH_USER}@${MDS_IP}" \
-    "sudo /opt/lustre-helpers/configure_lustre_role.sh \
+    "sudo /opt/lustre-lab/configure_lustre_role.sh \
         --role mds \
         --fsname lustrefs \
         --mdt-dev /dev/vdb \
@@ -205,7 +205,7 @@ for i in $(seq 0 $((OSS_COUNT - 1))); do
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
         "${SSH_USER}@${ip}" \
-        "sudo /opt/lustre-helpers/configure_lustre_role.sh \
+        "sudo /opt/lustre-lab/configure_lustre_role.sh \
             --role oss \
             --fsname lustrefs \
             --mgs-nid ${MDS_IP}@tcp \
@@ -251,7 +251,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
         "${SSH_USER}@${ip}" \
-        "sudo /opt/lustre-helpers/configure_lustre_role.sh \
+        "sudo /opt/lustre-lab/configure_lustre_role.sh \
             --role client \
             --fsname lustrefs \
             --mgs-nid ${MDS_IP}@tcp \
@@ -279,7 +279,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
         "${SSH_USER}@${ip}" \
-        "sudo /opt/lustre-helpers/configure_slurm_client.sh \
+        "sudo /opt/lustre-lab/configure_slurm_client.sh \
             --role ${role} \
             --node-name lustre-client${num} \
             --client-range '${CLIENT_RANGE}' \

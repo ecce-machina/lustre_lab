@@ -5,9 +5,9 @@ Phase 1 runs one workload on every Slurm client.
 Install on the currently running clients from `lustre-client1`:
 
 ```bash
-cd /opt/lustre-helpers
+cd /opt/lustre-lab
 sudo ./workloads/install.sh
-srun -N4 sudo /opt/lustre-helpers/workloads/install.sh
+srun -N4 sudo /opt/lustre-lab/workloads/install.sh
 ```
 
 The first command installs on the controller. The `srun` command installs on

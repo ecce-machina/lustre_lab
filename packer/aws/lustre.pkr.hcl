@@ -110,11 +110,11 @@ build {
     inline = [
       "set -euxo pipefail",
       "dnf -y install git",
-      "rm -rf /opt/lustre-helpers",
-      "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-helpers",
-      "cd /opt/lustre-helpers",
+      "rm -rf /opt/lustre-lab",
+      "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-lab",
+      "cd /opt/lustre-lab",
       "bash install_pkgs.sh",
-      "touch /opt/lustre-helpers/.packages_done",
+      "touch /opt/lustre-lab/.packages_done",
     ]
   }
 
@@ -134,7 +134,7 @@ build {
 
     inline = [
       "set -euxo pipefail",
-      "cd /opt/lustre-helpers",
+      "cd /opt/lustre-lab",
       "bash build_lustre.sh --method rpm",
       <<-EOT
         LUSTRE_KERNEL="$(
@@ -150,12 +150,12 @@ build {
           exit 1
         fi
 
-        echo "$LUSTRE_KERNEL" > /opt/lustre-helpers/.lustre_kernel
+        echo "$LUSTRE_KERNEL" > /opt/lustre-lab/.lustre_kernel
 
         echo "Setting default kernel to $LUSTRE_KERNEL"
         grubby --set-default "/boot/vmlinuz-$LUSTRE_KERNEL"
 
-        touch /opt/lustre-helpers/.build_done
+        touch /opt/lustre-lab/.build_done
       EOT
     ]
   }
@@ -177,7 +177,7 @@ build {
     inline = [
       "set -euxo pipefail",
       <<-EOT
-        LUSTRE_KERNEL="$(cat /opt/lustre-helpers/.lustre_kernel)"
+        LUSTRE_KERNEL="$(cat /opt/lustre-lab/.lustre_kernel)"
 
         echo "Expected kernel: $LUSTRE_KERNEL"
         echo "Running kernel:  $(uname -r)"
@@ -200,8 +200,8 @@ build {
 
         lsmod | grep -E 'lustre|lnet|ldiskfs|osd'
 
-        touch /opt/lustre-helpers/.modules_verified
-        touch /opt/lustre-helpers/IMAGE_BUILD_DONE
+        touch /opt/lustre-lab/.modules_verified
+        touch /opt/lustre-lab/IMAGE_BUILD_DONE
       EOT
     ]
   }

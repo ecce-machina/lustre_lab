@@ -15,3 +15,7 @@ id_rsa*
 
 # Logs
 *.log
+
+# local TF artifacts
+*.tfvars.bak
+tfplan

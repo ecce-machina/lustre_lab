@@ -13,7 +13,7 @@ variable "project_id" {
 
 variable "zone" {
   type    = string
-  default = "us-central1-a"
+  default = "us-central1-b"
 }
 
 variable "machine_type" {
@@ -68,6 +68,7 @@ source "googlecompute" "lustre" {
   machine_type = var.machine_type
 
   ssh_username = "rocky"
+  use_iap      = true
 
   source_image_family     = "rocky-linux-9"
   source_image_project_id = ["rocky-linux-cloud"]

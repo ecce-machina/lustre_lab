@@ -7,6 +7,19 @@ resource "aws_key_pair" "lustre_lab" {
   }
 }
 
+resource "aws_iam_role_policy" "cluster_discovery" {
+  name = "lustre-lab-cluster-discovery"
+  role = aws_iam_role.image_builder_ssm.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "ec2:DescribeInstances"
+      Resource = "*"
+    }]
+  })
+}
 
 resource "aws_iam_role" "image_builder_ssm" {
   name = "lustre-lab-image-builder-ssm"

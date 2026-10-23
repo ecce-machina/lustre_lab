@@ -28,8 +28,18 @@ dnf install -y \
   libmount-devel libblkid-devel libselinux-devel systemd-devel \
   python3-devel perl-ExtUtils-Embed wget curl libnl3 libnl3-devel
 
-dnf config-manager --set-enabled devel-debuginfo
-dnf install -y kernel-debuginfo kernel-devel
+#dnf config-manager --set-enabled devel-debuginfo
+#dnf install -y kernel-debuginfo kernel-devel
+#dnf install -y kernel-devel
+# Install development headers for the kernel selected for the next boot.
+NEXT_KERNEL=$(basename "$(grubby --default-kernel)" | sed 's/^vmlinuz-//')
+
+dnf install -y "kernel-devel-uname-r = ${NEXT_KERNEL}"
+
+test -d "/usr/src/kernels/${NEXT_KERNEL}" || {
+    echo "ERROR: kernel-devel missing for ${NEXT_KERNEL}"
+    exit 1
+}
 
 ## Lustre test harness dependencies
 

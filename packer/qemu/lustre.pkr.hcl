@@ -7,6 +7,16 @@ packer {
   }
 }
 
+variable "build_method" {
+  type    = string
+  default = "source"
+}
+
+variable "lustre_ref" {
+  type    = string
+  default = "2.17.59"
+}
+
 variable "ssh_public_key_file" {
   type = string
 }
@@ -30,7 +40,7 @@ source "qemu" "lustre" {
   iso_url      = "https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9-latest-x86_64-minimal.iso"
   iso_checksum = "none"
 
-  output_directory = "output"
+  output_directory = "${path.root}/output"
   vm_name          = "lustre-lab-rocky9.qcow2"
 
   format    = "qcow2"
@@ -51,7 +61,7 @@ source "qemu" "lustre" {
   ssh_password = "packer"
   ssh_timeout  = "30m"
 
-  http_directory = "http"
+  http_directory = "${path.root}/http"
 
   boot_wait = "10s"
 
@@ -84,9 +94,9 @@ build {
       "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-lab",
       "cd /opt/lustre-lab",
       "bash install_pkgs.sh",
-      "bash workloads/install.sh",
-      "sudo dnf install -y epel-release",
-      "sudo dnf install -y munge munge-libs slurm slurm-slurmd slurm-slurmctld fio",
+     # "bash workloads/install.sh",
+     # "sudo dnf install -y epel-release",
+     # "sudo dnf install -y munge munge-libs slurm slurm-slurmd slurm-slurmctld fio",
     ]
   }
 
@@ -107,20 +117,53 @@ build {
     inline = [
       "set -euxo pipefail",
       "cd /opt/lustre-lab",
-      "bash build_lustre.sh --method rpm",
+      "KVER=$(uname -r)",
+      "test -d /usr/src/kernels/$KVER || { echo \"ERROR: kernel-devel missing for $KVER\"; exit 1; }",
+      "bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref}",
+      "echo 'Running kernel:'; uname -r",
+      "echo 'Installed kernel images:'; ls -l /boot/vmlinuz-*",
+      "echo 'Installed kernel packages:'; rpm -qa 'kernel*' | sort",
       <<-EOT
-        LUSTRE_KERNEL="$(
-          rpm -qa --qf '%%{NAME} %%{VERSION}-%%{RELEASE}.%%{ARCH}\n' |
-            awk '$1 == "kernel" && $2 ~ /_lustre/ {print $2}' |
-            sort -V |
-            tail -1
-        )"
+        if [[ "${var.build_method}" == "source" ]]; then
+          echo "Selecting kernel for source-built Lustre modules"
 
-        test -n "$LUSTRE_KERNEL"
+          LUSTRE_KERNEL="$(
+            find /lib/modules -type f -path '*/extra/lustre/fs/lustre.ko' |
+              sed -n 's#^/lib/modules/\([^/]*\)/extra/lustre/fs/lustre\.ko$#\1#p' |
+              sort -V |
+              tail -1
+          )"
+        else
+          echo "Selecting Whamcloud Lustre kernel"
 
+          LUSTRE_KERNEL="$(
+            rpm -qa --qf '%%{NAME} %%{VERSION}-%%{RELEASE}.%%{ARCH}\n' |
+              awk '$1 == "kernel" && $2 ~ /_lustre/ {print $2}' |
+              sort -V |
+              tail -1
+          )"
+        fi
+
+        if [[ -z "$LUSTRE_KERNEL" ]]; then
+          echo "ERROR: could not determine Lustre kernel"
+          exit 1
+        fi
+
+        echo "Selected Lustre kernel: $LUSTRE_KERNEL"
         echo "$LUSTRE_KERNEL" > /opt/lustre-lab/.lustre_kernel
 
+        if [[ ! -f "/boot/vmlinuz-$LUSTRE_KERNEL" ]]; then
+          echo "ERROR: kernel image missing: $LUSTRE_KERNEL"
+          exit 1
+        fi
         grubby --set-default "/boot/vmlinuz-$LUSTRE_KERNEL"
+        if [[ ! -f "/boot/vmlinuz-$LUSTRE_KERNEL" ]]; then
+            echo "ERROR: Lustre modules were installed for $LUSTRE_KERNEL"
+            echo "but the corresponding kernel image is missing."
+            echo "Installed kernels:"
+            ls -l /boot/vmlinuz-*
+            exit 1
+        fi
       EOT
     ]
   }

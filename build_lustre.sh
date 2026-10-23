@@ -27,7 +27,9 @@ install_from_source() {
         kernel-abi-stablelists \
         kernel-rpm-macros
     ## Download kernel sources 
-    dnf download --source kernel-$(uname -r)
+    KVER=$(uname -r)
+    KVER_NOARCH=${KVER%.*}
+    dnf download --source "kernel-${KVER_NOARCH}"
     rpm -ihv kernel*rpm
     cd ~/rpmbuild/SOURCES
     ## FIXME using uname -r

@@ -28,18 +28,8 @@ dnf install -y \
   libmount-devel libblkid-devel libselinux-devel systemd-devel \
   python3-devel perl-ExtUtils-Embed wget curl libnl3 libnl3-devel
 
-#dnf config-manager --set-enabled devel-debuginfo
-#dnf install -y kernel-debuginfo kernel-devel
-#dnf install -y kernel-devel
-# Install development headers for the kernel selected for the next boot.
-NEXT_KERNEL=$(basename "$(grubby --default-kernel)" | sed 's/^vmlinuz-//')
-
-dnf install -y "kernel-devel-uname-r = ${NEXT_KERNEL}"
-
-test -d "/usr/src/kernels/${NEXT_KERNEL}" || {
-    echo "ERROR: kernel-devel missing for ${NEXT_KERNEL}"
-    exit 1
-}
+dnf config-manager --set-enabled devel-debuginfo
+dnf install -y kernel-debuginfo kernel-devel
 
 ## Lustre test harness dependencies
 
@@ -52,31 +42,5 @@ dnf install -y \
   iproute iputils \
   e2fsprogs \
   attr acl
-
-## allow root ssh for pdsh
-cat >/etc/ssh/sshd_config.d/90-lustre-lab.conf <<'EOF'
-PermitRootLogin prohibit-password
-PubkeyAuthentication yes
-EOF
-
-sshd -t
-
-# Shared SSH identity for isolated Lustre test nodes.
-install -d -m 700 /root/.ssh
-
-if [[ ! -f /root/.ssh/lustre_lab ]]; then
-    ssh-keygen -q -t ed25519 -N '' -f /root/.ssh/lustre_lab
-fi
-
-cat /root/.ssh/lustre_lab.pub > /root/.ssh/authorized_keys
-chmod 600 /root/.ssh/authorized_keys
-
-cat > /root/.ssh/config <<'EOF'
-Host lustre-*
-    IdentityFile /root/.ssh/lustre_lab
-    StrictHostKeyChecking accept-new
-EOF
-chmod 600 /root/.ssh/config
-
 
 ## REBOOT REQUIRED HERE

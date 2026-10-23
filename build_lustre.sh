@@ -27,11 +27,7 @@ install_from_source() {
         kernel-abi-stablelists \
         kernel-rpm-macros
     ## Download kernel sources 
-    ##dnf download --source kernel-$(uname -r)
-    dnf download --source \
-      --disablerepo='*-source' \
-      --enablerepo=baseos-source \
-      "kernel-$(uname -r)"
+    dnf download --source kernel-$(uname -r)
     rpm -ihv kernel*rpm
     cd ~/rpmbuild/SOURCES
     ## FIXME using uname -r
@@ -56,8 +52,7 @@ install_from_source() {
 
     ./configure --enable-server --enable-ldiskfs   
     make
-    #make rpms
-    make rpms RPMBUILD_BINARY_ARGS="--define 'configure_args --enable-server --enable-ldiskfs'"
+    make rpms
 
 	echo "RPM arguments passed to dnf:"
 	printf '%s\n' \

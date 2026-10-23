@@ -56,7 +56,8 @@ install_from_source() {
 
     ./configure --enable-server --enable-ldiskfs   
     make
-    make rpms
+    #make rpms
+    make rpms RPMBUILD_BINARY_ARGS="--define 'configure_args --enable-server --enable-ldiskfs'"
 
 	echo "RPM arguments passed to dnf:"
 	printf '%s\n' \

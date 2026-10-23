@@ -30,6 +30,7 @@ dnf install -y \
 
 dnf config-manager --set-enabled devel-debuginfo
 dnf install -y kernel-debuginfo kernel-devel
+dnf install -y openmpi-devel
 
 ## Lustre test harness dependencies
 

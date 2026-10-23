@@ -118,6 +118,7 @@ build {
       "set -euxo pipefail",
       "cd /opt/lustre-lab",
       "KVER=$(uname -r)",
+      "dnf install -y \"kernel-devel-uname-r = $KVER\"",
       "test -d /usr/src/kernels/$KVER || { echo \"ERROR: kernel-devel missing for $KVER\"; exit 1; }",
       "bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref}",
       "echo 'Running kernel:'; uname -r",

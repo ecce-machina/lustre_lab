@@ -4,14 +4,26 @@ set -euo pipefail
 OSS_COUNT="${OSS_COUNT:-2}"
 CLIENT_COUNT="${CLIENT_COUNT:-2}"
 
-IMAGE_DIR="${IMAGE_DIR:-/var/lib/libvirt/images/lustre-lab}"
-BASE_IMAGE="${BASE_IMAGE:-${IMAGE_DIR}/base.qcow2}"
+CLUSTER_NAME="${CLUSTER_NAME:-lustre-lab}"
+IMAGE_DIR="${IMAGE_DIR:-/home/libvirt/images/${CLUSTER_NAME}}"
+BASE_IMAGE="${BASE_IMAGE:-}"
 
-NETWORK_NAME="${NETWORK_NAME:-lustre-net}"
-NETWORK_CIDR="${NETWORK_CIDR:-192.168.150.0/24}"
-NETWORK_GATEWAY="${NETWORK_GATEWAY:-192.168.150.1}"
+[[ -n "$BASE_IMAGE" ]] || {
+    echo "ERROR: BASE_IMAGE must be specified" >&2
+    exit 1
+}
 
-MDS_IP="${MDS_IP:-192.168.150.10}"
+NETWORK_NAME="${NETWORK_NAME:-${CLUSTER_NAME}-net}"
+NETWORK_CIDR="${NETWORK_CIDR:-192.168.151.0/24}"
+NETWORK_GATEWAY="${NETWORK_GATEWAY:-192.168.151.1}"
+
+NETWORK_PREFIX="${NETWORK_GATEWAY%.*}"
+
+vm_name() {
+  echo "${CLUSTER_NAME}-$1"
+}
+
+MDS_IP="${MDS_IP:-${NETWORK_PREFIX}.10}"
 
 VM_MEMORY="${VM_MEMORY:-4096}"
 VM_VCPUS="${VM_VCPUS:-2}"
@@ -64,6 +76,8 @@ wait_for_ssh() {
     die "SSH did not become available on ${ip}"
 }
 
+MDS_VM="$(vm_name mds)"
+
 create_overlay() {
     local name="$1"
     local path="${IMAGE_DIR}/${name}.qcow2"
@@ -94,6 +108,17 @@ require_cmd ssh
 [[ $EUID -eq 0 ]] || die "run as root"
 [[ -f "$BASE_IMAGE" ]] || die "base image not found: $BASE_IMAGE"
 
+# Never reuse existing VM or Lustre target disks during provisioning.
+if [[ -d "$IMAGE_DIR" ]]; then
+    shopt -s nullglob
+    existing_disks=("$IMAGE_DIR"/*.qcow2 "$IMAGE_DIR"/*.raw)
+    shopt -u nullglob
+
+    if (( ${#existing_disks[@]} > 0 )); then
+        die "deployment directory contains existing disks: $IMAGE_DIR"
+    fi
+fi
+
 mkdir -p "$IMAGE_DIR"
 
 #
@@ -105,10 +130,10 @@ if ! virsh net-info "$NETWORK_NAME" >/dev/null 2>&1; then
 <network>
   <name>${NETWORK_NAME}</name>
   <forward mode='nat'/>
-  <bridge name='virbr-lustre' stp='on' delay='0'/>
+  <bridge stp='on' delay='0'/>
   <ip address='${NETWORK_GATEWAY}' netmask='255.255.255.0'>
     <dhcp>
-      <range start='192.168.150.100' end='192.168.150.200'/>
+      <range start='${NETWORK_PREFIX}.100' end='${NETWORK_PREFIX}.200'/>
     </dhcp>
   </ip>
 </network>
@@ -137,9 +162,9 @@ virsh net-update "$NETWORK_NAME" add ip-dhcp-host \
     "<host mac='52:54:00:10:00:10' name='lustre-mds' ip='${MDS_IP}'/>" \
     --live --config 2>/dev/null || true
 
-if ! virsh dominfo lustre-mds >/dev/null 2>&1; then
+if ! virsh dominfo "$MDS_VM" >/dev/null 2>&1; then
     virt-install \
-        --name lustre-mds \
+        --name "$MDS_VM" \
         --memory "$VM_MEMORY" \
         --vcpus "$VM_VCPUS" \
         --cpu host-model \
@@ -163,8 +188,7 @@ ssh \
     "sudo /opt/lustre-lab/configure_lustre_role.sh \
         --role mds \
         --fsname lustrefs \
-        --mdt-dev /dev/vdb \
-        --format true"
+        --mdt-dev /dev/vdb"
 
 #
 # OSS nodes
@@ -172,9 +196,10 @@ ssh \
 
 for i in $(seq 0 $((OSS_COUNT - 1))); do
     num=$((i + 1))
-    ip="192.168.150.$((20 + i))"
+    ip="${NETWORK_PREFIX}.$((20 + i))"
     mac=$(printf '52:54:00:10:00:%02x' $((20 + i)))
 
+    OSS_VM="$(vm_name "oss${num}")"
     create_overlay "lustre-oss${num}"
     create_raw_disk "${IMAGE_DIR}/ost${i}.raw" "$OST_SIZE"
 
@@ -182,9 +207,9 @@ for i in $(seq 0 $((OSS_COUNT - 1))); do
         "<host mac='${mac}' name='lustre-oss${num}' ip='${ip}'/>" \
         --live --config 2>/dev/null || true
 
-    if ! virsh dominfo "lustre-oss${num}" >/dev/null 2>&1; then
+    if ! virsh dominfo "$OSS_VM" >/dev/null 2>&1; then
         virt-install \
-            --name "lustre-oss${num}" \
+            --name "$OSS_VM" \
             --memory "$VM_MEMORY" \
             --vcpus "$VM_VCPUS" \
             --cpu host-model \
@@ -210,8 +235,7 @@ for i in $(seq 0 $((OSS_COUNT - 1))); do
             --fsname lustrefs \
             --mgs-nid ${MDS_IP}@tcp \
             --ost-dev /dev/vdb \
-            --index-base ${i} \
-            --format true"
+            --index-base ${i}"
 done
 
 #
@@ -220,18 +244,19 @@ done
 
 for i in $(seq 0 $((CLIENT_COUNT - 1))); do
     num=$((i + 1))
-    ip="192.168.150.$((30 + i))"
+    ip="${NETWORK_PREFIX}.$((30 + i))"
     mac=$(printf '52:54:00:10:00:%02x' $((30 + i)))
 
     create_overlay "lustre-client${num}"
+    CLIENT_VM="$(vm_name "client${num}")"
 
     virsh net-update "$NETWORK_NAME" add ip-dhcp-host \
         "<host mac='${mac}' name='lustre-client${num}' ip='${ip}'/>" \
         --live --config 2>/dev/null || true
 
-    if ! virsh dominfo "lustre-client${num}" >/dev/null 2>&1; then
+    if ! virsh dominfo "$CLIENT_VM" >/dev/null 2>&1; then
         virt-install \
-            --name "lustre-client${num}" \
+            --name "$CLIENT_VM" \
             --memory "$VM_MEMORY" \
             --vcpus "$VM_VCPUS" \
             --cpu host-model \
@@ -265,7 +290,7 @@ CONTROLLER_HOST="lustre-client1"
 
 for i in $(seq 0 $((CLIENT_COUNT - 1))); do
     num=$((i + 1))
-    ip="192.168.150.$((30 + i))"
+    ip="${NETWORK_PREFIX}.$((30 + i))"
 
     if [[ "$num" -eq 1 ]]; then
         role="controller"
@@ -293,10 +318,10 @@ echo "Lustre lab created:"
 echo "  MDS: ${MDS_IP}"
 
 for i in $(seq 0 $((OSS_COUNT - 1))); do
-    echo "  OSS$((i + 1)): 192.168.150.$((20 + i))"
+    echo "  OSS$((i + 1)): ${NETWORK_PREFIX}.$((20 + i))"
 done
 
 for i in $(seq 0 $((CLIENT_COUNT - 1))); do
-    echo "  Client$((i + 1)): 192.168.150.$((30 + i))"
+    echo "  Client$((i + 1)): ${NETWORK_PREFIX}.$((30 + i))"
 done
 

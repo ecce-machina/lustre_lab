@@ -19,7 +19,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 dnf -y install epel-release || true
-dnf -y install munge munge-libs slurm slurm-slurmd slurm-slurmctld fio || true
+dnf -y install libaec munge munge-libs slurm slurm-slurmd slurm-slurmctld fio || true
 
 if [[ -z "$MUNGE_KEY" ]]; then
   echo "ERROR: --munge-key is required"

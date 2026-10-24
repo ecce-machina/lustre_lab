@@ -19,7 +19,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 dnf -y install epel-release || true
-dnf -y clean metadata
+dnf clean all
+rm -rf /var/cache/dnf
+dnf makecache --refresh
 dnf -y install libaec munge munge-libs slurm slurm-slurmd slurm-slurmctld fio
 
 if [[ -z "$MUNGE_KEY" ]]; then

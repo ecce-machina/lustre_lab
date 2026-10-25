@@ -28,17 +28,26 @@ install_from_source() {
         kernel-rpm-macros
     ## Download kernel sources 
     KVER=$(uname -r)
-    KVER_NOARCH=${KVER%.*}
-    dnf download --source "kernel-${KVER_NOARCH}"
-    rpm -ihv kernel*rpm
-    cd ~/rpmbuild/SOURCES
-    ## FIXME using uname -r
-    tar -xf linux*tar.xz
-    KVER=$(uname -r)
-    KVER_NOARCH=${KVER%.*}
+    
+    if [[ "${LUSTRE_PROVISIONER:-}" == "qemu" ]]; then
+      echo "QEMU: Using kernel-devel for $KVER"
 
-    cp /boot/config-"$KVER" "$HOME/rpmbuild/SOURCES/linux-$KVER_NOARCH/.config"
+      test -d "/usr/src/kernels/$KVER" || {
+        echo "ERROR: Missing kernel-devel for $KVER"
+        exit 1
+      }
+    else
+        KVER_NOARCH=${KVER%.*}
+        dnf download --source "kernel-${KVER_NOARCH}"
+      rpm -ihv kernel*rpm
+      cd ~/rpmbuild/SOURCES
+      ## FIXME using uname -r
+      tar -xf linux*tar.xz
+      KVER=$(uname -r)
+      KVER_NOARCH=${KVER%.*}
 
+      cp /boot/config-"$KVER" "$HOME/rpmbuild/SOURCES/linux-$KVER_NOARCH/.config"
+    fi
 
     ## Lustre build and install
 

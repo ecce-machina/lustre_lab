@@ -242,6 +242,24 @@ done
 # Clients
 #
 
+ensure_vm_network_up() {
+    local vm="$1"
+    local tap
+
+    tap=$(virsh -c qemu:///system domiflist "$vm" |
+        awk -v net="$NETWORK_NAME" '$2 == "network" && $3 == net {print $1; exit}')
+
+    if [[ -z "$tap" || ! -e "/sys/class/net/$tap" ]]; then
+        echo "ERROR: No tap interface found for $vm" >&2
+        return 1
+    fi
+
+    if ! ip link show dev "$tap" | grep -q '<[^>]*UP[,>]'; then
+        echo "Bringing up $vm tap interface: $tap"
+        ip link set dev "$tap" up
+    fi
+}
+
 for i in $(seq 0 $((CLIENT_COUNT - 1))); do
     num=$((i + 1))
     ip="${NETWORK_PREFIX}.$((30 + i))"
@@ -269,6 +287,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
     fi
 
     wait_for_ssh "$ip"
+    ensure_vm_network_up "$CLIENT_VM"
 
     ssh \
         -i "$SSH_KEY" \

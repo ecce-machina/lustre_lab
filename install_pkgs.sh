@@ -16,7 +16,9 @@ set -euo pipefail
 ## Get required packages and tools
 
 dnf update -y
-dnf install -y epel-release 'dnf-command(config-manager)'
+dnf install -y \
+  https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
+  'dnf-command(config-manager)'
 dnf config-manager --set-enabled crb
 dnf groupinstall -y "Development Tools"
 dnf install -y \

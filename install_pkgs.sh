@@ -27,7 +27,6 @@ dnf install -y \
   elfutils-libelf-devel openssl-devel libyaml-devel krb5-devel \
   libmount-devel libblkid-devel libselinux-devel systemd-devel \
   python3-devel perl-ExtUtils-Embed wget curl libnl3 libnl3-devel
-  krb5-devel keyutils-libs-devel
 
 dnf config-manager --set-enabled devel-debuginfo
 dnf install -y kernel-debuginfo kernel-devel

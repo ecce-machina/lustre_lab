@@ -37,9 +37,8 @@ variable "repo_ref" {
 }
 
 source "qemu" "lustre" {
-  iso_url      = "https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9-latest-x86_64-minimal.iso"
-  iso_checksum = "none"
-
+  iso_url          = "https://dl.rockylinux.org/vault/rocky/9.7/isos/x86_64/Rocky-9.7-x86_64-minimal.iso"
+  iso_checksum     = "file:https://dl.rockylinux.org/vault/rocky/9.7/isos/x86_64/Rocky-9.7-x86_64-minimal.iso.CHECKSUM"
   output_directory = "${path.root}/output"
   vm_name          = "lustre-lab-rocky9.qcow2"
 
@@ -49,13 +48,13 @@ source "qemu" "lustre" {
   memory = 4096
   cpus   = 4
 
-  headless     = true
-  accelerator  = "kvm"
+  headless    = true
+  accelerator = "kvm"
 
   qemuargs = [
     ["-cpu", "host"]
   ]
-  qemu_binary  = var.qemu_binary
+  qemu_binary = var.qemu_binary
 
   ssh_username = "packer"
   ssh_password = "packer"
@@ -79,6 +78,19 @@ build {
   name    = "lustre-lab-qemu"
   sources = ["source.qemu.lustre"]
 
+  provisioner "file" {
+    source      = "pin_rocky_97.sh"
+    destination = "/tmp/pin_rocky_97.sh"
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; sudo -E {{ .Vars }} {{ .Path }}"
+
+    inline = [
+      "bash /tmp/pin_rocky_97.sh",
+    ]
+  }
+
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; sudo -E {{ .Vars }} {{ .Path }}"
 
@@ -94,9 +106,9 @@ build {
       "git clone --branch \"$REPO_REF\" --depth 1 \"$REPO_URL\" /opt/lustre-lab",
       "cd /opt/lustre-lab",
       "bash install_pkgs.sh",
-     # "bash workloads/install.sh",
-     # "sudo dnf install -y epel-release",
-     # "sudo dnf install -y munge munge-libs slurm slurm-slurmd slurm-slurmctld fio",
+      # "bash workloads/install.sh",
+      # "sudo dnf install -y epel-release",
+      # "sudo dnf install -y munge munge-libs slurm slurm-slurmd slurm-slurmctld fio",
     ]
   }
 
@@ -122,7 +134,9 @@ build {
       "test -d /usr/src/kernels/$KVER || { echo \"ERROR: kernel-devel missing for $KVER\"; exit 1; }",
       "dnf config-manager --set-disabled epel-source || true",
       "dnf config-manager --set-enabled baseos-source",
-      "bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref}",
+      "dnf -y install openmpi-devel",
+      "rpm -q openmpi-devel || { echo 'ERROR: openmpi-devel missing'; exit 1; }",
+      "LUSTRE_PROVISIONER=qemu bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref}",
       "echo 'Running kernel:'; uname -r",
       "echo 'Installed kernel images:'; ls -l /boot/vmlinuz-*",
       "echo 'Installed kernel packages:'; rpm -qa 'kernel*' | sort",
@@ -203,7 +217,7 @@ build {
       EOT
     ]
   }
-  
+
 
   provisioner "file" {
     source      = var.ssh_public_key_file
@@ -220,13 +234,13 @@ build {
       "test -s /home/packer/.ssh/authorized_keys",
       "grep -q '^ssh-' /home/packer/.ssh/authorized_keys",
       "touch /opt/lustre-lab/.ssh_key_installed",
-     
-      "printf '%s\n' '[Unit]' 'Description=Load Lustre kernel modules' 'After=network-online.target' 'Wants=network-online.target' '' '[Service]' 'Type=oneshot' 'ExecStart=/usr/sbin/modprobe lustre' 'ExecStart=/usr/sbin/modprobe ldiskfs' 'ExecStart=/usr/sbin/modprobe osd_ldiskfs' 'RemainAfterExit=yes' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/lustre-modules.service", 
+
+      "printf '%s\n' '[Unit]' 'Description=Load Lustre kernel modules' 'After=network-online.target' 'Wants=network-online.target' '' '[Service]' 'Type=oneshot' 'ExecStart=/usr/sbin/modprobe lustre' 'ExecStart=/usr/sbin/modprobe ldiskfs' 'ExecStart=/usr/sbin/modprobe osd_ldiskfs' 'RemainAfterExit=yes' '' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/lustre-modules.service",
       "systemctl daemon-reload",
       "systemctl enable lustre-modules.service",
       "sync",
     ]
   }
-}   
- 
+}
+
 

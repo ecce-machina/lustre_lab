@@ -78,19 +78,6 @@ build {
   name    = "lustre-lab-qemu"
   sources = ["source.qemu.lustre"]
 
-  provisioner "file" {
-    source      = "pin_rocky_97.sh"
-    destination = "/tmp/pin_rocky_97.sh"
-  }
-
-  provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; sudo -E {{ .Vars }} {{ .Path }}"
-
-    inline = [
-      "bash /tmp/pin_rocky_97.sh",
-    ]
-  }
-
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; sudo -E {{ .Vars }} {{ .Path }}"
 
@@ -129,9 +116,6 @@ build {
     inline = [
       "set -euxo pipefail",
       "cd /opt/lustre-lab",
-      "KVER=$(uname -r)",
-      "dnf install -y \"kernel-devel-uname-r = $KVER\"",
-      "test -d /usr/src/kernels/$KVER || { echo \"ERROR: kernel-devel missing for $KVER\"; exit 1; }",
       "dnf config-manager --set-disabled epel-source || true",
       "dnf config-manager --set-enabled baseos-source",
       "dnf -y install openmpi-devel",

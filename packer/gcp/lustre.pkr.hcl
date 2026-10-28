@@ -13,7 +13,7 @@ variable "project_id" {
 
 variable "zone" {
   type    = string
-  default = "us-central1-b"
+  default = "us-central1-a"
 }
 
 variable "machine_type" {
@@ -68,7 +68,6 @@ source "googlecompute" "lustre" {
   machine_type = var.machine_type
 
   ssh_username = "rocky"
-  use_iap      = true
 
   source_image_family     = "rocky-linux-9"
   source_image_project_id = ["rocky-linux-cloud"]
@@ -79,6 +78,7 @@ source "googlecompute" "lustre" {
 
   metadata = {
     enable-oslogin = "FALSE"
+    serial-port-enable = "TRUE"
   }
   disk_size = var.disk_size
 
@@ -93,6 +93,15 @@ source "googlecompute" "lustre" {
 build {
   name    = "lustre-lab-gcp"
   sources = ["source.googlecompute.lustre"]
+
+  provisioner "shell" {
+    inline = [
+      "sudo mkdir -p /etc/systemd/journald.conf.d",
+      "echo -e '[Journal]\\nForwardToConsole=yes\\nMaxLevelConsole=debug' | sudo tee /etc/systemd/journald.conf.d/packer-debug.conf",
+      "sudo systemctl restart systemd-journald",
+      "sudo dmesg -n 8"
+    ]
+  }
 
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; sudo -E {{ .Vars }} {{ .Path }}"
@@ -130,7 +139,19 @@ build {
     inline = [
       "set -euxo pipefail",
       "cd /opt/lustre-lab",
-      "bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref}",
+      <<-EOT
+        if bash build_lustre.sh --method ${var.build_method} --lustre-ref ${var.lustre_ref} > /var/log/lustre-build.log 2>&1; then
+          BUILD_RC=0
+        else
+          BUILD_RC=$?
+        fi
+        echo "$BUILD_RC" > /var/log/lustre-build.exit
+        tail -100 /var/log/lustre-build.log
+        if [ "$BUILD_RC" -ne 0 ]; then
+          exit "$BUILD_RC"
+        fi
+      EOT
+      ,
       <<-EOT
       if [[ "${var.build_method}" == "source" ]]; then
           echo "Selecting kernel for source-built Lustre modules"

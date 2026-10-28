@@ -16,6 +16,22 @@ done
 
 echo "Downloading and installing e2fsprogs with whamcloud patch"
 
+if [[ "$METHOD" == "source" ]]; then
+    KVER="$(uname -r)"
+
+    echo "Building Lustre against kernel: $KVER"
+
+    if [[ ! -d "/usr/src/kernels/$KVER" ]]; then
+        echo "ERROR: Missing kernel-devel for running kernel $KVER"
+        exit 1
+    fi
+
+    if ! rpm -q "kernel-debuginfo-$KVER" >/dev/null; then
+        echo "ERROR: Missing kernel-debuginfo for running kernel $KVER"
+        exit 1
+    fi
+fi
+
 wget -r -np -nd -A "*.rpm" https://downloads.whamcloud.com/public/e2fsprogs/latest/el9/RPMS/x86_64/
 sudo dnf -y install *.rpm
 

@@ -16,6 +16,22 @@ done
 
 echo "Downloading and installing e2fsprogs with whamcloud patch"
 
+if [[ "$METHOD" == "source" ]]; then
+    KVER="$(uname -r)"
+
+    echo "Building Lustre against kernel: $KVER"
+
+    if [[ ! -d "/usr/src/kernels/$KVER" ]]; then
+        echo "ERROR: Missing kernel-devel for running kernel $KVER"
+        exit 1
+    fi
+
+    if ! rpm -q "kernel-debuginfo-$KVER" >/dev/null; then
+        echo "ERROR: Missing kernel-debuginfo for running kernel $KVER"
+        exit 1
+    fi
+fi
+
 wget -r -np -nd -A "*.rpm" https://downloads.whamcloud.com/public/e2fsprogs/latest/el9/RPMS/x86_64/
 sudo dnf -y install *.rpm
 
@@ -27,27 +43,16 @@ install_from_source() {
         kernel-abi-stablelists \
         kernel-rpm-macros
     ## Download kernel sources 
+    dnf download --source kernel-$(uname -r)
+    rpm -ihv kernel*rpm
+    cd ~/rpmbuild/SOURCES
+    ## FIXME using uname -r
+    tar -xf linux*tar.xz
     KVER=$(uname -r)
-    
-    if [[ "${LUSTRE_PROVISIONER:-}" == "qemu" ]]; then
-      echo "QEMU: Using kernel-devel for $KVER"
+    KVER_NOARCH=${KVER%.*}
 
-      test -d "/usr/src/kernels/$KVER" || {
-        echo "ERROR: Missing kernel-devel for $KVER"
-        exit 1
-      }
-    else
-        KVER_NOARCH=${KVER%.*}
-        dnf download --source "kernel-${KVER_NOARCH}"
-      rpm -ihv kernel*rpm
-      cd ~/rpmbuild/SOURCES
-      ## FIXME using uname -r
-      tar -xf linux*tar.xz
-      KVER=$(uname -r)
-      KVER_NOARCH=${KVER%.*}
+    cp /boot/config-"$KVER" "$HOME/rpmbuild/SOURCES/linux-$KVER_NOARCH/.config"
 
-      cp /boot/config-"$KVER" "$HOME/rpmbuild/SOURCES/linux-$KVER_NOARCH/.config"
-    fi
 
     ## Lustre build and install
 
